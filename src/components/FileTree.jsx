@@ -6,7 +6,7 @@ import { generateStructure, flattenStructure } from '../data/techData';
  * @param {Object} props
  * @param {Object} props.cfg
  */
-export default function FileTree({ cfg, activeFile, onSelect }) {
+export default function FileTree({ cfg, activeFile, onSelect, editedOverrides }) {
   const structure = useMemo(() => generateStructure(cfg), [cfg]);
   const files = flattenStructure(structure);
 
@@ -26,16 +26,17 @@ export default function FileTree({ cfg, activeFile, onSelect }) {
       {files.map(f => {
         const isDir = f.endsWith('/');
         const isActive = f === activeFile;
+        const modified = !isDir && editedOverrides && Object.prototype.hasOwnProperty.call(editedOverrides, f);
         return (
           <div key={f}>
             <button
               type="button"
               className={"tree-entry "+(isDir?'dir ':'')+(isActive?'active':'')}
               disabled={isDir}
-              onClick={() => !isDir && onSelect && onSelect(f, getContent(f))}
-              aria-label={isDir?`Directory ${f}`:`File ${f}`}
+              onClick={() => !isDir && onSelect && onSelect(f, modified ? editedOverrides[f] : getContent(f))}
+              aria-label={isDir?`Directory ${f}`:`File ${f}${modified?' (modified)':''}`}
             >
-              {f}
+              {f}{modified && ' *'}
             </button>
           </div>
         );

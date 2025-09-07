@@ -5,6 +5,7 @@ import StepIndicators from './components/StepIndicators';
 import MultiSelectCategory from './components/MultiSelectCategory';
 import TemplateModal from './components/TemplateModal';
 import FileTree from './components/FileTree';
+import EditorDiff from './components/EditorDiff';
 import ScriptPreview from './components/ScriptPreview';
 import { TECH_STACK, CATEGORY_LABELS, checkCompatibility, generateScript } from './data/techData';
 
@@ -25,8 +26,11 @@ export default function App() {
   const [license, setLicense] = useState('MIT');
   const [showTemplates, setShowTemplates] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-  const [previewFile, setPreviewFile] = useState(null);
+  const [previewFile, setPreviewFile] = useState(() => localStorage.getItem('genappxpress-last-preview') || null);
   const [previewContent, setPreviewContent] = useState('');
+  const [originalContent, setOriginalContent] = useState('');
+  const [editedOverrides, setEditedOverrides] = useState({});
+  const [highlightCssLoaded, setHighlightCssLoaded] = useState(false);
   /**
    * Export setup script and config as ZIP file
    * @param {Object} cfg - Project config
@@ -134,6 +138,37 @@ export default function App() {
     return function() { window.removeEventListener('keydown', handleKey); };
   }, [showTemplates]);
 
+  // Load highlight.js CSS on demand when entering step 3 for first time
+  React.useEffect(()=>{
+    if(currentStep===3 && !highlightCssLoaded){
+      const link=document.createElement('link');
+      link.rel='stylesheet';
+      link.href='https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
+      link.onload=()=>setHighlightCssLoaded(true);
+      document.head.appendChild(link);
+    }
+  },[currentStep, highlightCssLoaded]);
+
+  // When selecting a file, capture original vs edited
+  function handleSelectFile(path, content){
+    setPreviewFile(path);
+    localStorage.setItem('genappxpress-last-preview', path);
+    const original = content;
+    setOriginalContent(original);
+    if(editedOverrides[path]){
+      setPreviewContent(editedOverrides[path]);
+    } else {
+      setPreviewContent(original);
+    }
+  }
+
+  function handleEditCurrent(newVal){
+    setPreviewContent(newVal);
+    if(previewFile){
+      setEditedOverrides(prev=>({...prev, [previewFile]: newVal}));
+    }
+  }
+
   return (
     <div className="app-shell" role="main" aria-label="GenAppXpress Wizard">
   <header aria-label="App header">
@@ -189,14 +224,11 @@ export default function App() {
                 <h2 style={{marginTop:0}}>File Tree & Preview</h2>
                 <div className="file-preview-layout">
                   <div className="file-tree-pane" aria-label="File tree" role="tree">
-                    <FileTree cfg={cfg} activeFile={previewFile} onSelect={(path, content)=>{setPreviewFile(path); setPreviewContent(content);}} />
+                    <FileTree cfg={cfg} activeFile={previewFile} onSelect={handleSelectFile} editedOverrides={editedOverrides} />
                   </div>
                   <div className="file-preview-pane" aria-label="File preview" role="group">
                     {previewFile ? (
-                      <>
-                        <div className="preview-header">{previewFile}</div>
-                        <pre className="preview-content" aria-label={`Contents of ${previewFile}`}>{previewContent || '/* empty file */'}</pre>
-                      </>
+                      <EditorDiff path={previewFile} original={originalContent} value={previewContent} onChange={handleEditCurrent} />
                     ) : <div className="preview-placeholder">Select a file to preview its contents.</div>}
                   </div>
                 </div>

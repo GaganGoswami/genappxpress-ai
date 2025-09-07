@@ -113,6 +113,20 @@
   [data-color-scheme="dark"] .preview-header {background:rgba(255,255,255,0.08);}
   .preview-content {margin:0; padding:12px 14px; font-size:12px; line-height:1.4; overflow:auto; flex:1; font-family:var(--font-family-mono);}
   .preview-placeholder {padding:32px; text-align:center; opacity:0.7; font-size:14px;}
+  /* Editor & diff styles */
+  .editor-toolbar {display:flex; gap:8px; padding:6px 8px; border-bottom:1px solid var(--color-border); background:var(--color-surface); align-items:center;}
+  .editor-toolbar button {font-size:11px; padding:4px 8px;}
+  .code-editor {flex:1; position:relative; display:flex; background:#111b1c; color:#d6f2f4;}
+  .code-editor textarea {flex:1; width:100%; border:none; outline:none; resize:none; background:transparent; color:inherit; font:12px/1.4 var(--font-family-mono); padding:12px 14px;}
+  .code-editor .hljs-overlay {pointer-events:none; position:absolute; inset:0; overflow:auto; padding:12px 14px; font:12px/1.4 var(--font-family-mono); white-space:pre;}
+  .hljs {background:transparent;}
+  .diff-view {font-family:var(--font-family-mono); font-size:12px; line-height:1.3; overflow:auto; border-top:1px solid var(--color-border); max-height:160px;}
+  .diff-line {display:flex; white-space:pre;}
+  .diff-line.add {background:rgba(0,160,40,0.12); color:#0f6d31;}
+  .diff-line.del {background:rgba(200,0,0,0.14); color:#a31515;}
+  .diff-line.ctx {color:var(--color-text-secondary);}
+  .diff-line .ln {width:30px; flex:0 0 30px; opacity:.55; padding-right:4px; text-align:right;}
+  .diff-line code {flex:1;}
   /* Interactive tree entries */
   .tree-entry {all:unset; display:block; width:100%; text-align:left; cursor:pointer; font-family:var(--font-family-mono); font-size:12px; padding:3px 6px; border-radius:4px; border:1px solid transparent; color:var(--color-text-secondary);} 
   .tree-entry:hover:not(.dir):not(:disabled){background:rgba(0,0,0,0.06); color:var(--color-text);} 
@@ -156,6 +170,8 @@
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </head>
 <body>
   <div id="root" role="application" aria-label="GenAppXpress App Scaffolder"></div>
@@ -347,7 +363,7 @@
       );
     };
 
-    const FileTree = ({cfg, activeFile, onSelect}) => {
+    const FileTree = ({cfg, activeFile, onSelect, editedOverrides}) => {
       const structure = useMemo(()=>generateStructure(cfg),[cfg]);
       const files = flattenStructure(structure);
       const getContent = (path) => {
@@ -359,7 +375,8 @@
       return <div className="file-tree" aria-label="File tree preview">{files.map(f=> {
         const isDir = f.endsWith('/');
         const isActive = f === activeFile;
-        return <div key={f}> <button type="button" className={"tree-entry "+(isDir? 'dir ':'')+(isActive?'active':'')} disabled={isDir} onClick={()=>!isDir && onSelect && onSelect(f, getContent(f))} aria-label={(isDir?'Directory ':'File ')+f}>{f}</button> </div>;
+        const modified = !isDir && editedOverrides && Object.prototype.hasOwnProperty.call(editedOverrides,f);
+        return <div key={f}> <button type="button" className={"tree-entry "+(isDir? 'dir ':'')+(isActive?'active':'')} disabled={isDir} onClick={()=>!isDir && onSelect && onSelect(f, modified? editedOverrides[f] : getContent(f))} aria-label={(isDir?'Directory ':'File ')+f+(modified?' (modified)':'')}>{f}{modified && ' *'}</button> </div>;
       })}</div>;
     };
 
@@ -384,6 +401,21 @@
       );
     };
 
+    const CodeEditor = ({path, original, value, onChange, showDiff}) => {
+      const textRef = React.useRef(null); const overlayRef = React.useRef(null);
+      function guess(p){ if(/\.py$/.test(p)) return 'python'; if(/\.jsx?$/.test(p)) return 'javascript'; if(/\.sh$/.test(p)) return 'bash'; if(/\.json$/.test(p)) return 'json'; if(/\.ya?ml$/.test(p)) return 'yaml'; return null; }
+      React.useEffect(()=>{ if(!overlayRef.current) return; try { const g=guess(path); let res; if(g && window.hljs){ res = hljs.highlight(value||'', {language: g==='yaml'? 'json': g}); } else if(window.hljs){ res = hljs.highlightAuto(value||''); } overlayRef.current.innerHTML = (res && res.value ? res.value : (value||'')) + '\n'; } catch(e){ overlayRef.current.textContent = (value||'')+'\n'; } }, [value, path]);
+      React.useEffect(()=>{ const t=textRef.current, o=overlayRef.current; if(!t||!o) return; function sync(){o.scrollTop=t.scrollTop; o.scrollLeft=t.scrollLeft;} t.addEventListener('scroll',sync); return ()=>t.removeEventListener('scroll',sync); },[]);
+      const diffLines = React.useMemo(()=>{ if(!showDiff) return []; const oldL=(original||'').split(/\r?\n/); const newL=(value||'').split(/\r?\n/); const m=oldL.length,n=newL.length; const dp=Array.from({length:m+1},()=>Array(n+1).fill(0)); for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) dp[i][j]= oldL[i-1]===newL[j-1]? dp[i-1][j-1]+1: Math.max(dp[i-1][j],dp[i][j-1]); const ops=[]; let i=m,j=n; while(i>0&&j>0){ if(oldL[i-1]===newL[j-1]){ ops.push({type:'ctx', line:oldL[i-1]}); i--; j--; } else if(dp[i-1][j]>=dp[i][j-1]) { ops.push({type:'del', line:oldL[i-1]}); i--; } else { ops.push({type:'add', line:newL[j-1]}); j--; } } while(i>0){ ops.push({type:'del', line:oldL[i-1]}); i--; } while(j>0){ ops.push({type:'add', line:newL[j-1]}); j--; } return ops.reverse(); }, [showDiff, original, value]);
+      return React.createElement(React.Fragment,null,
+        React.createElement('div',{className:'code-editor'},
+          React.createElement('pre',{ref:overlayRef,className:'hljs-overlay','aria-hidden':'true'}),
+          React.createElement('textarea',{ref:textRef,value:value,spellCheck:false,'aria-label':'Edit '+path,onChange:e=>onChange(e.target.value)})
+        ),
+        showDiff && React.createElement('div',{className:'diff-view','aria-label':'Diff view'}, diffLines.map((d,i)=>React.createElement('div',{key:i,className:'diff-line '+d.type}, React.createElement('span',{className:'ln'}, d.type==='add'?'+': d.type==='del'?'-':''), React.createElement('code',null,d.line||'\u00A0'))))
+      );
+    };
+
     const App = () => {
       const [currentStep,setCurrentStep]=useState(1);
       const [projectName,setProjectName]=useState('my-awesome-project');
@@ -394,8 +426,12 @@
       const [darkMode,setDarkMode]=useState(document.documentElement.getAttribute('data-color-scheme')==='dark');
   const emptySelection = {frontend:[], backend:[], database:[], tools:[], aiFrameworks:[], llmProviders:[], protocols:[]};
   const [selected,setSelected]=useState(emptySelection);
-  const [previewFile,setPreviewFile] = useState(null);
+  const [previewFile,setPreviewFile] = useState(()=>localStorage.getItem('genappxpress-last-preview')||null);
   const [previewContent,setPreviewContent] = useState('');
+  const [originalContent,setOriginalContent] = useState('');
+  const [editedOverrides,setEditedOverrides] = useState({});
+  const [editMode,setEditMode] = useState(false);
+  const [showDiff,setShowDiff] = useState(false);
 
       const onToggle=(category,id)=>{setSelected(prev=>{const list=prev[category]; const exists=list.includes(id); return {...prev,[category]: exists? list.filter(x=>x!==id): [...list,id]};});};
       const applyTemplate = (preset)=>{ setSelected(prev=> ({...prev, ...Object.fromEntries(Object.keys(emptySelection).map(k=>[k, preset[k] || prev[k]]))})); setShowTemplates(false); };
@@ -423,7 +459,10 @@
       const canNext = () => {
         if(currentStep===1) return projectName.trim().length>2; if(currentStep===2) return Object.values(selected).some(a=>a.length); return true; };
 
-      return (
+  const handleSelectFile=(p,c)=>{setPreviewFile(p); localStorage.setItem('genappxpress-last-preview', p); setOriginalContent(c); setPreviewContent(editedOverrides[p]||c); setEditMode(false); setShowDiff(false);};
+  const handleEditChange=(val)=>{ setPreviewContent(val); if(previewFile){ setEditedOverrides(prev=>({...prev,[previewFile]:val})); } };
+  const downloadCurrent=()=>{ if(!previewFile) return; const blob=new Blob([previewContent],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=previewFile.split('/').pop(); a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); };
+  return (
         <div className="app-shell">
           <header>
             <div className="logo" aria-hidden>GX</div>
@@ -480,13 +519,22 @@
                     <h2 style={{marginTop:0}}>File Tree & Preview</h2>
                     <div className="file-preview-layout">
                       <div className="file-tree-pane" aria-label="File tree" role="tree">
-                        <FileTree cfg={cfg} activeFile={previewFile} onSelect={(p,c)=>{setPreviewFile(p); setPreviewContent(c||'');}} />
+                        <FileTree cfg={cfg} activeFile={previewFile} onSelect={handleSelectFile} editedOverrides={editedOverrides} />
                       </div>
                       <div className="file-preview-pane" aria-label="File preview" role="group">
                         {previewFile ? (
                           <React.Fragment>
-                            <div className="preview-header">{previewFile}</div>
-                            <pre className="preview-content" aria-label={`Contents of ${previewFile}`}>{previewContent || '/* empty file */'}</pre>
+                            <div className="editor-toolbar">
+                              <strong style={{fontSize:'12px', flex:1, overflow:'hidden', textOverflow:'ellipsis'}}>{previewFile}{editedOverrides[previewFile]?' *':''}</strong>
+                              <button type="button" onClick={()=>setEditMode(m=>!m)}>{editMode?'Read Only':'Edit'}</button>
+                              <button type="button" disabled={!editMode} onClick={()=>setShowDiff(d=>!d)}>{showDiff?'Hide Diff':'Show Diff'}</button>
+                              <button type="button" onClick={downloadCurrent}>Download</button>
+                            </div>
+                            {editMode ? (
+                              <CodeEditor path={previewFile} original={originalContent} value={previewContent} onChange={handleEditChange} showDiff={showDiff} />
+                            ) : (
+                              <pre className="preview-content hljs" aria-label={`Contents of ${previewFile}`} dangerouslySetInnerHTML={{__html:(function(){ try { return (window.hljs && hljs.highlightAuto(previewContent||'').value) || (previewContent||''); } catch(e){ return previewContent || ''; } })()}} />
+                            )}
                           </React.Fragment>
                         ) : <div className="preview-placeholder">Select a file to preview its contents.</div>}
                       </div>
