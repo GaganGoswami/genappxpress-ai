@@ -1,3 +1,6 @@
+import React, { useState, useMemo } from 'react';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 const emptySelection = {frontend:[], backend:[], database:[], tools:[], aiFrameworks:[], llmProviders:[], protocols:[]};
 
@@ -15,6 +18,19 @@ export default function App() {
   const [author, setAuthor] = useState('');
   const [license, setLicense] = useState('MIT');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  /**
+   * Export setup script and config as ZIP file
+   * @param {Object} cfg - Project config
+   */
+  function exportZip(cfg) {
+    const zip = new JSZip();
+    zip.file('setup.sh', generateScript(cfg));
+    zip.file('project.json', JSON.stringify(cfg, null, 2));
+    zip.generateAsync({ type: 'blob' }).then(function(content) {
+      saveAs(content, `${cfg.projectName || 'genappxpress'}-setup.zip`);
+    });
+  }
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem('genappxpress-theme');
     if (stored) return stored === 'dark';
@@ -111,20 +127,21 @@ export default function App() {
   }, [showTemplates]);
 
   return (
-    <div className="app-shell">
-      <header>
+    <div className="app-shell" role="main" aria-label="GenAppXpress Wizard">
+  <header aria-label="App header">
         <div className="logo" aria-hidden>GX</div>
         <div className="title-block">
           <h1>GenAppXpress <span className="pill">ALPHA</span></h1>
           <div className="tagline">Visual full‑stack & agentic AI scaffolding · Export scripts & project files</div>
         </div>
         <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle color theme">{darkMode? 'Light Mode':'Dark Mode'}</button>
-        <button className="secondary" onClick={()=>setShowTemplates(true)}>Templates</button>
+  <button className="secondary" onClick={()=>setShowTemplates(true)}>Templates</button>
+  <button className="secondary" onClick={()=>setShowHelp(true)} aria-label="Show usage/help">Help</button>
       </header>
-      <div className="wizard">
+  <div className="wizard" role="region" aria-label="Wizard Steps">
         <StepIndicators currentStep={currentStep} steps={["Project","Tech Stack","Summary","Generate"]} setStep={setCurrentStep} />
-        <div className="wizard-panels">
-          <div className={"wizard-step "+(currentStep===1?'active':'')}>
+  <div className="wizard-panels" role="tabpanel" aria-label="Wizard Panels">
+          <div className={"wizard-step "+(currentStep===1?'active':'')} role="tabpanel" aria-label="Project Configuration Step">
             <div className="section">
               <h2>Project Configuration</h2>
               <div className="inline-fields">
@@ -142,7 +159,7 @@ export default function App() {
             <MultiSelectCategory category="llmProviders" selected={selected.llmProviders} onToggle={onToggle} />
             <MultiSelectCategory category="protocols" selected={selected.protocols} onToggle={onToggle} />
           </div>
-          <div className={"wizard-step "+(currentStep===3?'active':'')}>
+          <div className={"wizard-step "+(currentStep===3?'active':'')} role="tabpanel" aria-label="Summary & Compatibility Step">
             <div className="section">
               <h2>Summary & Compatibility</h2>
               <p style={{marginTop:-4}}>Review your selections and adjust before generation.</p>
@@ -164,13 +181,13 @@ export default function App() {
               <FileTree cfg={cfg} />
             </div>
           </div>
-          <div className={"wizard-step "+(currentStep===4?'active':'')}>
+          <div className={"wizard-step "+(currentStep===4?'active':'')} role="tabpanel" aria-label="Generated Script Step">
             <div className="section">
               <h2>Generated Setup Script</h2>
               <ScriptPreview cfg={cfg} />
               <div style={{marginTop:16, display:'flex', gap:12, flexWrap:'wrap'}}>
                 <button onClick={()=>navigator.clipboard.writeText(generateScript(cfg))}>Copy Script</button>
-                {/* ZIP export handled in ScriptPreview for modular version */}
+                <button onClick={()=>exportZip(cfg)}>Export ZIP</button>
               </div>
             </div>
             <div className="section">
@@ -194,6 +211,21 @@ export default function App() {
         </div>
       </div>
       {showTemplates && <TemplateModal onClose={()=>setShowTemplates(false)} applyTemplate={applyTemplate} />}
+      {showHelp && (
+        <div className="modal" role="dialog" aria-modal="true" aria-label="Usage Help" style={{zIndex:1000, background:'rgba(0,0,0,0.5)', position:'fixed', top:0, left:0, right:0, bottom:0}}>
+          <div className="modal-content" style={{background:'#fff', padding:32, maxWidth:500, margin:'40px auto', borderRadius:8}}>
+            <h2>GenAppXpress Usage Example</h2>
+            <ol style={{lineHeight:1.7}}>
+              <li>Fill in your project details and select technologies for each category.</li>
+              <li>Use <b>Templates</b> for quick presets.</li>
+              <li>Review compatibility and file tree preview.</li>
+              <li>Generate and export setup scripts and files.</li>
+              <li>Use keyboard navigation: <b>←</b>/<b>→</b> for steps, <b>Esc</b> to close modals.</li>
+            </ol>
+            <button onClick={()=>setShowHelp(false)} style={{marginTop:24}}>Close</button>
+          </div>
+        </div>
+      )}
       <div className="footer-note">GenAppXpress – Instant full-stack & AI agent scaffolding • v0.1.0</div>
 
     </div>
