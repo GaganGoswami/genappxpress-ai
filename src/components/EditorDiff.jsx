@@ -27,7 +27,7 @@ export default function EditorDiff({ path, original, value, onChange }) {
   const [showDiff, setShowDiff] = useState(false);
 
   // Basic language guess
-  const lang = useMemo(()=>{
+  const autoLang = useMemo(()=>{
     if(/\.py$/.test(path)) return 'python';
     if(/\.jsx?$/.test(path)) return 'javascript';
     if(/\.sh$/.test(path)) return 'bash';
@@ -35,6 +35,8 @@ export default function EditorDiff({ path, original, value, onChange }) {
     if(/\.ya?ml$/.test(path)) return 'yaml';
     return 'plaintext';
   }, [path]);
+  const [manualLang, setManualLang] = useState(null);
+  const lang = manualLang || autoLang;
 
   useEffect(()=>{
     if(!overlayRef.current) return;
@@ -82,6 +84,9 @@ export default function EditorDiff({ path, original, value, onChange }) {
     <div style={{display:'flex', flexDirection:'column', height:'100%', overflow:'hidden'}}>
       <div className="editor-toolbar">
         <strong style={{fontSize:12, flex:1}}>{path}</strong>
+        <select aria-label="Select language" value={manualLang || autoLang} onChange={e=>setManualLang(e.target.value===autoLang? null : e.target.value)} style={{fontSize:11}}>
+          {['plaintext','javascript','python','bash','json','yaml'].map(opt=> <option key={opt} value={opt}>{opt}</option>)}
+        </select>
         <button type="button" onClick={()=>setShowDiff(d=>!d)}>{showDiff? 'Hide Diff':'Show Diff'}</button>
         <button type="button" onClick={downloadEdited}>Download</button>
       </div>

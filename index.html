@@ -312,7 +312,19 @@
     async function exportZip(cfg){
       const structure = generateStructure(cfg);
       const zip = new JSZip();
-      function add(obj, base='') {Object.entries(obj).forEach(([k,v])=>{if(typeof v === 'string') zip.file(base+k,v); else if(v && typeof v==='object'){add(v, base+k+'/');} });}
+      // Add all files, applying edited overrides if present
+      function add(obj, base='') {
+        Object.entries(obj).forEach(([k,v])=>{
+          if(v === undefined) return;
+          if(typeof v === 'string') {
+            const fullPath = base + k; // e.g. projectName/README.md
+            const override = (window.__editedOverrides && window.__editedOverrides[fullPath]);
+            zip.file(fullPath, override !== undefined ? override : v);
+          } else if(v && typeof v==='object') {
+            add(v, base+k+'/');
+          }
+        });
+      }
       add(structure);
       zip.file('setup.sh', generateScript(cfg));
       const blob = await zip.generateAsync({type:'blob'});
@@ -403,12 +415,21 @@
 
     const CodeEditor = ({path, original, value, onChange, showDiff}) => {
       const textRef = React.useRef(null); const overlayRef = React.useRef(null);
+      const [manualLang,setManualLang] = React.useState('auto');
       function guess(p){ if(/\.py$/.test(p)) return 'python'; if(/\.jsx?$/.test(p)) return 'javascript'; if(/\.sh$/.test(p)) return 'bash'; if(/\.json$/.test(p)) return 'json'; if(/\.ya?ml$/.test(p)) return 'yaml'; return null; }
-      React.useEffect(()=>{ if(!overlayRef.current) return; try { const g=guess(path); let res; if(g && window.hljs){ res = hljs.highlight(value||'', {language: g==='yaml'? 'json': g}); } else if(window.hljs){ res = hljs.highlightAuto(value||''); } overlayRef.current.innerHTML = (res && res.value ? res.value : (value||'')) + '\n'; } catch(e){ overlayRef.current.textContent = (value||'')+'\n'; } }, [value, path]);
+      React.useEffect(()=>{ if(!overlayRef.current) return; try { const guessed=guess(path); const lang = manualLang==='auto'? guessed : manualLang; let res; if(lang && window.hljs){ res = hljs.highlight(value||'', {language: (lang==='yaml'?'json':lang)}); } else if(window.hljs){ res = hljs.highlightAuto(value||''); } overlayRef.current.innerHTML = (res && res.value ? res.value : (value||'')) + '\n'; } catch(e){ overlayRef.current.textContent = (value||'')+'\n'; } }, [value, path, manualLang]);
       React.useEffect(()=>{ const t=textRef.current, o=overlayRef.current; if(!t||!o) return; function sync(){o.scrollTop=t.scrollTop; o.scrollLeft=t.scrollLeft;} t.addEventListener('scroll',sync); return ()=>t.removeEventListener('scroll',sync); },[]);
       const diffLines = React.useMemo(()=>{ if(!showDiff) return []; const oldL=(original||'').split(/\r?\n/); const newL=(value||'').split(/\r?\n/); const m=oldL.length,n=newL.length; const dp=Array.from({length:m+1},()=>Array(n+1).fill(0)); for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) dp[i][j]= oldL[i-1]===newL[j-1]? dp[i-1][j-1]+1: Math.max(dp[i-1][j],dp[i][j-1]); const ops=[]; let i=m,j=n; while(i>0&&j>0){ if(oldL[i-1]===newL[j-1]){ ops.push({type:'ctx', line:oldL[i-1]}); i--; j--; } else if(dp[i-1][j]>=dp[i][j-1]) { ops.push({type:'del', line:oldL[i-1]}); i--; } else { ops.push({type:'add', line:newL[j-1]}); j--; } } while(i>0){ ops.push({type:'del', line:oldL[i-1]}); i--; } while(j>0){ ops.push({type:'add', line:newL[j-1]}); j--; } return ops.reverse(); }, [showDiff, original, value]);
       return React.createElement(React.Fragment,null,
         React.createElement('div',{className:'code-editor'},
+          React.createElement('div',{style:{position:'absolute', top:4, right:8, zIndex:3}},
+            React.createElement('label',{style:{fontSize:'11px', display:'flex', alignItems:'center', gap:4}},
+              React.createElement('span',null,'Lang:'),
+              React.createElement('select',{value:manualLang,onChange:e=>setManualLang(e.target.value),style:{fontSize:'11px'}},
+                ['auto','javascript','python','bash','json','yaml','markdown'].map(l=>React.createElement('option',{key:l,value:l},l))
+              )
+            )
+          ),
           React.createElement('pre',{ref:overlayRef,className:'hljs-overlay','aria-hidden':'true'}),
           React.createElement('textarea',{ref:textRef,value:value,spellCheck:false,'aria-label':'Edit '+path,onChange:e=>onChange(e.target.value)})
         ),
@@ -461,6 +482,8 @@
 
   const handleSelectFile=(p,c)=>{setPreviewFile(p); localStorage.setItem('genappxpress-last-preview', p); setOriginalContent(c); setPreviewContent(editedOverrides[p]||c); setEditMode(false); setShowDiff(false);};
   const handleEditChange=(val)=>{ setPreviewContent(val); if(previewFile){ setEditedOverrides(prev=>({...prev,[previewFile]:val})); } };
+  // Expose overrides globally for exportZip merging
+  React.useEffect(()=>{ window.__editedOverrides = editedOverrides; }, [editedOverrides]);
   const downloadCurrent=()=>{ if(!previewFile) return; const blob=new Blob([previewContent],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=previewFile.split('/').pop(); a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); };
   return (
         <div className="app-shell">

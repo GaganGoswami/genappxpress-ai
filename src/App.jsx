@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { generateStructure } from './data/techData';
 import StepIndicators from './components/StepIndicators';
 import MultiSelectCategory from './components/MultiSelectCategory';
 import TemplateModal from './components/TemplateModal';
@@ -37,8 +38,32 @@ export default function App() {
    */
   function exportZip(cfg) {
     const zip = new JSZip();
+    // Add setup script & raw config
     zip.file('setup.sh', generateScript(cfg));
     zip.file('project.json', JSON.stringify(cfg, null, 2));
+
+    // Build full structure including overrides
+    const structure = generateStructure(cfg);
+
+    /** Recursively add files/directories to zip, applying edited overrides */
+    function addNodes(node, pathParts=[]) {
+      Object.entries(node || {}).forEach(([name, val]) => {
+        if (val === undefined) return; // skip undefined optional dirs
+        const newParts = pathParts.concat([name]);
+        const relPath = newParts.join('/');
+        if (typeof val === 'string') {
+          // Original content unless overridden
+            const fullPath = relPath; // e.g. projectName/README.md
+            const content = editedOverrides[fullPath] !== undefined ? editedOverrides[fullPath] : val;
+            zip.file(fullPath, content);
+        } else if (val && typeof val === 'object') {
+          // Directory – ensure folder entry and recurse
+          addNodes(val, newParts);
+        }
+      });
+    }
+    addNodes(structure, []);
+
     zip.generateAsync({ type: 'blob' }).then(function(content) {
       saveAs(content, `${cfg.projectName || 'genappxpress'}-setup.zip`);
     });
