@@ -120,8 +120,14 @@ export function generateStructure(cfg){
   if(reactSelected){
     const appFile = useTS? 'App.tsx':'App.jsx';
     const mainFile = useTS? 'main.tsx':'main.jsx';
-    srcDir[appFile] = `import React from 'react';\nexport default function App(){\n  return <div style={{fontFamily:'sans-serif',padding:32}}><h1>${cfg.projectName}</h1><p>Generated with GenAppXpress.</p></div>;\n}`;
-  srcDir[mainFile] = `import React from 'react';\nimport { createRoot } from 'react-dom/client';\nimport App from './${appFile}';\nconst rootEl = document.getElementById('root');\nif(rootEl){ createRoot(rootEl).render(<App />); }`;
+    const wantChatUI = cfg.llmProviders.length>0 && (expressSelected || fastapiSelected);
+    const chatComponentName = 'ChatClient';
+    if(wantChatUI){
+      srcDir['components'] = srcDir['components'] || {};
+      srcDir['components'][`${chatComponentName}.${useTS?'tsx':'jsx'}`] = `import React, { useState } from 'react';\nexport default function ${chatComponentName}(){\n  const [messages,setMessages]=useState([]);\n  const [input,setInput]=useState('');\n  async function send(e){ e.preventDefault(); if(!input.trim()) return; const userMsg={role:'user',content:input}; setMessages(m=>[...m,userMsg]); setInput(''); try { const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message: userMsg.content})}); const j=await r.json(); setMessages(m=>[...m,{role:'assistant',content:j.reply||JSON.stringify(j)}]); } catch(err){ setMessages(m=>[...m,{role:'assistant',content:'Error: '+err.message}]); }}\n  return <div style={{border:'1px solid #ccc',borderRadius:8,padding:16,marginTop:24}}><h3 style={{marginTop:0}}>Chat</h3><div style={{maxHeight:200,overflow:'auto',background:'#111b1c',color:'#d6f2f4',padding:8,borderRadius:6,fontFamily:'monospace',fontSize:12}}>{messages.map((m,i)=><div key={i}><strong>{m.role==='user'?'You':'AI'}:</strong> {m.content}</div>)}</div><form onSubmit={send} style={{display:'flex',gap:8,marginTop:8}}><input value={input} onChange={e=>setInput(e.target.value)} placeholder='Ask something...' style={{flex:1,padding:8}}/><button type='submit'>Send</button></form></div>; }`;
+    }
+    srcDir[appFile] = `import React from 'react';${wantChatUI?`\nimport ${chatComponentName} from './components/${chatComponentName}';`:''}\nexport default function App(){\n  return <div style={{fontFamily:'sans-serif',padding:32}}><h1>${cfg.projectName}</h1><p>Generated with GenAppXpress.</p>${wantChatUI?`<${chatComponentName} />`:''}</div>;\n}`;
+    srcDir[mainFile] = `import React from 'react';\nimport { createRoot } from 'react-dom/client';\nimport App from './${appFile}';\nconst rootEl = document.getElementById('root');\nif(rootEl){ createRoot(rootEl).render(<App />); }`;
   }
   if(vueSelected){
     srcDir['main.js'] = `import { createApp } from 'vue';\nconst App={template:'<div style=\\"font-family:sans-serif;padding:32\\"><h1>${cfg.projectName}</h1><p>Generated with GenAppXpress (Vue).</p></div>'};\ncreateApp(App).mount('#root');`;
@@ -134,13 +140,26 @@ export function generateStructure(cfg){
   const indexHtml = (reactSelected||vueSelected) ? { 'index.html': `<!DOCTYPE html>\n<html><head><meta charset='UTF-8'/><title>${cfg.projectName}</title></head><body><div id='root'></div><script type='module' src='${reactSelected? (useTS?'src/main.tsx':'src/main.jsx') : 'src/main.js'}'></script></body></html>` } : {};
 
   // --- BACKEND CODE (Express) ---
-  const serverDir = expressSelected ? {
-    'server.js': `import express from 'express';\nimport cors from 'cors';\nimport helmet from 'helmet';\nconst app = express();\napp.use(helmet());\napp.use(cors());\napp.use(express.json());\napp.get('/api/health', (_req,res)=>res.json({ok:true}));\nconst port = process.env.PORT || 3001;\napp.listen(port, ()=>console.log('Express server running on '+port));\n`
-  } : undefined;
+  // --- SERVER (Express) with optional chat route integration ---
+  let serverDir = undefined;
+  let includeChatRoute = false;
+  if(expressSelected){
+    // If React frontend and any LLM provider selected, add a chat route
+    includeChatRoute = reactSelected && cfg.llmProviders.length>0;
+    const chatRouteFile = includeChatRoute ? {
+      'routes': {
+        'chat.js': `import { Router } from 'express';\nimport fetch from 'node-fetch';\nconst router = Router();\n// Simple relay endpoint (expects {message})\nrouter.post('/chat', async (req,res)=>{\n  const { message } = req.body || {};\n  if(!message){ return res.status(400).json({error:'message required'}); }\n  // Example: echo or integrate with provider via Python side /agents or direct API\n  // For real OpenAI call in Node (if you add openai npm dep):\n  // const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });\n  // const completion = await client.responses.create({ model:'gpt-4o-mini', input: message });\n  // return res.json({ reply: completion.output_text });\n  res.json({ reply: 'Echo: '+message });\n});\nexport default router;\n`
+      }
+    } : {};
+    const serverJs = `import express from 'express';\nimport cors from 'cors';\nimport helmet from 'helmet';\n${includeChatRoute?"import chatRouter from './routes/chat.js';\n":""}const app = express();\napp.use(helmet());\napp.use(cors());\napp.use(express.json());\napp.get('/api/health', (_req,res)=>res.json({ ok: true }));\n${includeChatRoute?"app.use('/api', chatRouter);\n":""}const port = process.env.PORT || 3001;\napp.listen(port, ()=>console.log('Express server running on '+port));\n`;
+    serverDir = { 'server.js': serverJs, ...(chatRouteFile||{}) };
+  }
 
   // --- BACKEND CODE (FastAPI) ---
+  const wantRag = fastapiSelected && cfg.aiFrameworks.includes('langchain') && cfg.llmProviders.includes('openai');
   const apiDir = fastapiSelected ? {
-    'main.py': `from fastapi import FastAPI\nfrom pydantic import BaseModel\nimport os\napp = FastAPI()\nclass Echo(BaseModel):\n    message: str\n@app.get('/health')\nasync def health():\n    return {'ok': True}\n@app.post('/echo')\nasync def echo(payload: Echo):\n    return {'echo': payload.message}\nif __name__ == '__main__':\n    import uvicorn\n    uvicorn.run(app, host='0.0.0.0', port=int(os.getenv('PORT', 8000)))\n`
+    'main.py': `from fastapi import FastAPI, Depends\nfrom pydantic import BaseModel\nimport os\napp = FastAPI()\nclass Echo(BaseModel):\n    message: str\n@app.get('/health')\nasync def health():\n    return {'ok': True}\n@app.post('/echo')\nasync def echo(payload: Echo):\n    return {'echo': payload.message}\n${wantRag?"from .rag import get_retriever\nclass Ask(BaseModel):\n    question: str\n@app.post('/rag')\nasync def rag(q: Ask, retriever = Depends(get_retriever)):\n    docs = retriever(q.question)\n    return {'chunks': docs}\n":""}if __name__ == '__main__':\n    import uvicorn\n    uvicorn.run(app, host='0.0.0.0', port=int(os.getenv('PORT', 8000)))\n`,
+    ...(wantRag ? { 'rag.py': `# Minimal placeholder retriever for RAG demo\nfrom typing import List, Callable\nCORPUS = [\n  'GenAppXpress accelerates scaffolding.',\n  'LangChain enables composable LLM workflows.',\n  'FastAPI delivers high-performance async APIs.'\n]\ndef simple_retriever(query: str) -> List[str]:\n  q=query.lower().split()\n  return [c for c in CORPUS if any(tok in c.lower() for tok in q)][:3]\ndef get_retriever() -> Callable[[str], List[str]]:\n  return simple_retriever\n` } : {})
   } : undefined;
 
   // --- DATABASE FILES ---
@@ -164,11 +183,11 @@ export function generateStructure(cfg){
   // --- AI FRAMEWORKS ---
   const frameworkDir = (cfg.aiFrameworks.length || providersDir) ? {} : undefined;
   if(frameworkDir){
-    if(cfg.aiFrameworks.includes('langchain')) frameworkDir['agent_langchain.py'] = `import os\nfrom langchain_openai import ChatOpenAI\nllm = ChatOpenAI(api_key=os.getenv('OPENAI_API_KEY'), model='gpt-4o-mini')\nif __name__ == '__main__':\n    print(llm.invoke('Hello from LangChain'))`;
-    if(cfg.aiFrameworks.includes('crewai')) frameworkDir['agent_crewai.py'] = `# Minimal CrewAI usage placeholder (real crew setup requires roles/tasks)\nif __name__ == '__main__':\n    print('CrewAI scaffold ready')`;
-    if(cfg.aiFrameworks.includes('langgraph')) frameworkDir['agent_langgraph.py'] = `# LangGraph basic scaffold\nif __name__ == '__main__':\n    print('LangGraph scaffold ready')`;
-    if(cfg.aiFrameworks.includes('semantic-kernel')) frameworkDir['agent_sk.py'] = `# Semantic Kernel scaffold\nif __name__ == '__main__':\n    print('Semantic Kernel scaffold ready')`;
-    if(cfg.aiFrameworks.includes('autogen')) frameworkDir['agent_autogen.py'] = `# AutoGen basic scaffold\nif __name__ == '__main__':\n    print('AutoGen scaffold ready')`;
+    if(cfg.aiFrameworks.includes('langchain')) frameworkDir['agent_langchain.py'] = `"""LangChain quickstart example."""\nimport os\nfrom langchain_openai import ChatOpenAI\nfrom langchain_core.prompts import ChatPromptTemplate\nmodel = ChatOpenAI(api_key=os.getenv('OPENAI_API_KEY'), model='gpt-4o-mini', temperature=0)\nprompt = ChatPromptTemplate.from_messages([('system','You are concise.'),('user','{q}')])\nchain = prompt | model\nif __name__ == '__main__':\n    print(chain.invoke({'q':'Say hi in 5 words.'}))`;
+    if(cfg.aiFrameworks.includes('crewai')) frameworkDir['agent_crewai.py'] = `"""CrewAI mini crew."""\nfrom crewai import Agent, Task, Crew\nassistant = Agent(role='Helper', goal='Assist briefly', backstory='A helpful AI', allow_delegation=False)\njob = Task(description='Give one-sentence motivation', agent=assistant)\nif __name__ == '__main__':\n    crew = Crew(agents=[assistant], tasks=[job])\n    print(crew.kickoff())`;
+    if(cfg.aiFrameworks.includes('langgraph')) frameworkDir['agent_langgraph.py'] = `"""LangGraph minimal graph."""\nfrom langgraph.graph import StateGraph, END\nclass State(dict): pass\ndef one(s:State): s['msg']='Hello'; return s\ndef two(s:State): s['msg']+=' Graph'; return s\nsg=StateGraph(State)\nsg.add_node('one',one); sg.add_node('two',two)\nsg.set_entry_point('one'); sg.add_edge('one','two'); sg.add_edge('two',END)\napp=sg.compile()\nif __name__=='__main__': print(app.invoke({}))`;
+    if(cfg.aiFrameworks.includes('semantic-kernel')) frameworkDir['agent_sk.py'] = `"""Semantic Kernel sample."""\nimport asyncio, os\nimport semantic_kernel as sk\nfrom semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion\nasync def main():\n  kernel=sk.Kernel()\n  if os.getenv('OPENAI_API_KEY'):\n    kernel.add_service(OpenAIChatCompletion(service_id='openai', api_key=os.getenv('OPENAI_API_KEY'), model_id='gpt-4o-mini'))\n    svc=kernel.get_service('openai'); print(await svc.complete('Write a 4 word motto.'))\n  else: print('No OPENAI_API_KEY set.')\nif __name__=='__main__': asyncio.run(main())`;
+    if(cfg.aiFrameworks.includes('autogen')) frameworkDir['agent_autogen.py'] = `"""AutoGen simple chat."""\nfrom autogen import AssistantAgent, UserProxyAgent\nassistant=AssistantAgent('assistant'); user=UserProxyAgent('user', code_execution_config=False)\nif __name__=='__main__': user.initiate_chat(assistant, message='Say hi succinctly.')`;
   }
 
   // Protocols (MCP minimal client stub)
@@ -191,6 +210,7 @@ export function generateStructure(cfg){
   if(fastapiSelected){ pyPackages.add('fastapi'); pyPackages.add('uvicorn'); }
   cfg.llmProviders.forEach(id=>{ if(id==='openai') pyPackages.add('openai'); if(id==='anthropic') pyPackages.add('anthropic'); if(id==='gemini') pyPackages.add('google-generativeai'); if(id==='xai') pyPackages.add('groq'); if(id==='ollama') pyPackages.add('requests'); });
   cfg.aiFrameworks.forEach(id=>{ if(id==='langchain') pyPackages.add('langchain'); if(id==='crewai') pyPackages.add('crewai'); if(id==='langgraph') pyPackages.add('langgraph'); if(id==='semantic-kernel') pyPackages.add('semantic-kernel'); if(id==='autogen') pyPackages.add('pyautogen'); });
+  if(wantRag){ pyPackages.add('chromadb'); pyPackages.add('pydantic'); }
   const requirementsFile = pyPackages.size ? { 'requirements.txt': Array.from(pyPackages).sort().join('\n')+'\n' } : {};
 
   const base = {
