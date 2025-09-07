@@ -270,39 +270,104 @@
       return `# ${cfg.projectName}\n\nGenerated with **GenAppXpress**.\n\n## Selected Stack\n${Object.keys(CATEGORY_LABELS).map(cat=>{const arr=cfg[cat]; if(!arr||!arr.length) return ''; return `- **${CATEGORY_LABELS[cat]}:** ${arr.join(', ')}`;}).filter(Boolean).join('\n')}\n\n## Getting Started\nRun the generated setup script or follow manual steps.\n\n## AI Notes\nIf using AI providers set the API keys in .env before running agent scripts.\n`;}
 
     function generateStructure(cfg){
-      const base = {
-        [cfg.projectName]: {
-          'README.md': generateReadme(cfg),
-          '.env': generateEnv(cfg),
-          'package.json': '{\\n  "name": "'+cfg.projectName+'",\\n  "private": true\\n}',
-          'agents': cfg.aiFrameworks.length||cfg.llmProviders.length?{
-            'main_agent.py': '# Example agent entrypoint\nprint("Agent online")',
-            'config': {'providers.yaml':'# provider config placeholder'},
-            ...(cfg.protocols.includes('mcp')?{'mcp':{'client.js':'// MCP client placeholder'}}:{}),
-          }:undefined,
-          'server': cfg.backend.includes('express')?{'server.js':'// express server placeholder'}:undefined,
-          'src': cfg.frontend.includes('react')?{'App.jsx':'// React app placeholder','main.jsx':'// entry'}:undefined,
-          'database': cfg.database.length?{'schema.sql':'-- SQL schema'}:undefined
-        }
+      const useTS = cfg.tools.includes('typescript');
+      const reactSelected = cfg.frontend.includes('react');
+      const vueSelected = cfg.frontend.includes('vue');
+      const nextSelected = cfg.frontend.includes('nextjs');
+      const expressSelected = cfg.backend.includes('express');
+      const fastapiSelected = cfg.backend.includes('fastapi');
+
+      const pkg = {
+        name: cfg.projectName,
+        private: true,
+        type: 'module',
+        scripts: {
+          ...(reactSelected || vueSelected ? { dev: 'vite', build: 'vite build', preview: 'vite preview' } : {}),
+          ...(nextSelected ? { dev: 'next dev', build: 'next build', start: 'next start' } : {}),
+          ...(expressSelected ? { server: 'node server/server.js' } : {}),
+          ...(fastapiSelected ? { api: 'uvicorn api.main:app --reload' } : {}),
+        },
+        dependencies: {},
+        devDependencies: {}
       };
-      return base;
-    }
+      function addDep(n,v='latest'){pkg.dependencies[n]=v;}
+      function addDev(n,v='latest'){pkg.devDependencies[n]=v;}
+      if(reactSelected){ addDep('react'); addDep('react-dom'); addDep('vite'); }
+      if(vueSelected){ addDep('vue'); addDep('vite'); }
+      if(nextSelected){ addDep('next'); addDep('react'); addDep('react-dom'); }
+      if(expressSelected){ addDep('express'); addDep('cors'); addDep('helmet'); }
+      if(cfg.database.includes('postgresql')) addDep('pg');
+      if(cfg.database.includes('mongodb')) addDep('mongoose');
+      if(cfg.database.includes('redis')) addDep('ioredis');
+      if(cfg.protocols.includes('mcp')) addDep('mcp-sdk');
+      if(cfg.tools.includes('eslint')) addDev('eslint');
+      if(useTS){ addDev('typescript'); if(expressSelected) addDev('@types/express'); if(reactSelected){addDev('@types/react'); addDev('@types/react-dom');}}
+
+      const srcDir = {};
+  if(reactSelected){ const appFile=useTS?'App.tsx':'App.jsx'; const mainFile=useTS?'main.tsx':'main.jsx'; srcDir[appFile]=`import React from 'react';\nexport default function App(){\n  return (<div style={{fontFamily:'sans-serif',padding:32}}><h1>${cfg.projectName}</h1><p>Generated with GenAppXpress.</p></div>);\n}`; srcDir[mainFile]=`import React from 'react';\nimport { createRoot } from 'react-dom/client';\nimport App from './${appFile}';\nconst rootEl = document.getElementById('root');\nif(rootEl){ createRoot(rootEl).render(<App />); }`; }
+      if(vueSelected){ srcDir['main.js'] = `import { createApp } from 'vue';\nconst App={template:'<div style=\\"font-family:sans-serif;padding:32\\"><h1>${cfg.projectName}</h1><p>Generated with GenAppXpress (Vue).</p></div>'};\ncreateApp(App).mount('#root');`; }
+      if(nextSelected){ srcDir['pages']={ 'index.js': `export default function Home(){return (<main style={{fontFamily:'sans-serif',padding:32}}><h1>${cfg.projectName}</h1><p>Generated with GenAppXpress (Next.js).</p></main>);}`}; srcDir['next.config.js']=`export default {};`; }
+  // Build index.html content; split closing script tag to avoid ending this inline script block
+  const indexHtml = (reactSelected || vueSelected) ? { 'index.html': [
+    '<!DOCTYPE html>',
+    '<html>',
+    '<head>',
+    '  <meta charset="UTF-8">',
+    `  <title>${cfg.projectName}</title>`,
+    '</head>',
+    '<body>',
+    '  <div id="root"></div>',
+    '  <script type="module" src="' + (reactSelected ? (useTS ? 'src/main.tsx' : 'src/main.jsx') : 'src/main.js') + '"></' + 'script>',
+    '</body>',
+    '</html>'
+  ].join('\n') } : {};
+
+      const serverDir = expressSelected ? { 'server.js': `import express from 'express';\nimport cors from 'cors';\nimport helmet from 'helmet';\nconst app=express();\napp.use(helmet());\napp.use(cors());\napp.use(express.json());\napp.get('/api/health',(_req,res)=>res.json({ok:true}));\nconst port=process.env.PORT||3001;\napp.listen(port,()=>console.log('Express server running on '+port));` } : undefined;
+      const apiDir = fastapiSelected ? { 'main.py': `from fastapi import FastAPI\nfrom pydantic import BaseModel\nimport os\napp=FastAPI()\nclass Echo(BaseModel):\n    message: str\n@app.get('/health')\nasync def health():\n    return {'ok': True}\n@app.post('/echo')\nasync def echo(payload: Echo):\n    return {'echo': payload.message}\nif __name__=='__main__':\n    import uvicorn\n    uvicorn.run(app, host='0.0.0.0', port=int(os.getenv('PORT',8000)))` } : undefined;
+
+      const dbDir = cfg.database.length ? {} : undefined;
+      if(dbDir){ if(cfg.database.includes('postgresql')) dbDir['schema.sql'] = `-- Example PostgreSQL schema\nCREATE TABLE IF NOT EXISTS items (id SERIAL PRIMARY KEY, name TEXT NOT NULL);`; if(cfg.database.includes('mongodb')) dbDir['models']={'index.js':`import mongoose from 'mongoose';\nconst ItemSchema=new mongoose.Schema({name:String});\nexport const Item=mongoose.model('Item',ItemSchema);`}; if(cfg.database.includes('redis')) dbDir['redis.js']=`import Redis from 'ioredis';\nexport const redis=new Redis(process.env.REDIS_URL||'redis://localhost:6379');`; }
+
+      const providersDir = cfg.llmProviders.length ? {} : undefined;
+      if(providersDir){ if(cfg.llmProviders.includes('openai')) providersDir['openai_client.py'] = `from openai import OpenAI\nimport os\nclient=OpenAI(api_key=os.getenv('OPENAI_API_KEY'))\nif __name__=='__main__':\n    resp=client.chat.completions.create(model='gpt-4o-mini', messages=[{'role':'user','content':'Hello from OpenAI'}])\n    print(resp.choices[0].message.content)`; if(cfg.llmProviders.includes('anthropic')) providersDir['anthropic_client.py']=`import anthropic, os\nclient=anthropic.Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))\nif __name__=='__main__':\n    msg=client.messages.create(model='claude-3-5-sonnet', max_tokens=50, messages=[{'role':'user','content':'Hello from Anthropic'}])\n    print(msg.content[0].text)`; if(cfg.llmProviders.includes('gemini')) providersDir['gemini_client.py']=`import google.generativeai as genai, os\ngenai.configure(api_key=os.getenv('GEMINI_API_KEY'))\nif __name__=='__main__':\n    model=genai.GenerativeModel('gemini-1.5-flash')\n    resp=model.generate_content('Hello from Gemini')\n    print(resp.text)`; if(cfg.llmProviders.includes('xai')) providersDir['xai_client.py']=`from groq import Groq\nimport os\nclient=Groq(api_key=os.getenv('XAI_API_KEY'))\nif __name__=='__main__':\n    resp=client.chat.completions.create(model='grok-beta', messages=[{'role':'user','content':'Hello from Grok'}])\n    print(resp.choices[0].message.content)`; if(cfg.llmProviders.includes('ollama')) providersDir['ollama_client.py']=`import requests, os, json\nbase=os.getenv('OLLAMA_HOST','http://localhost:11434')\nif __name__=='__main__':\n    r=requests.post(base+'/api/generate', json={'model':'llama3','prompt':'Hello from Ollama'})\n    print(r.json())`; }
+
+      const frameworkDir = (cfg.aiFrameworks.length||providersDir) ? {} : undefined;
+      if(frameworkDir){ if(cfg.aiFrameworks.includes('langchain')) frameworkDir['agent_langchain.py']=`import os\nfrom langchain_openai import ChatOpenAI\nllm=ChatOpenAI(api_key=os.getenv('OPENAI_API_KEY'), model='gpt-4o-mini')\nif __name__=='__main__':\n    print(llm.invoke('Hello from LangChain'))`; if(cfg.aiFrameworks.includes('crewai')) frameworkDir['agent_crewai.py']=`# CrewAI scaffold\nif __name__=='__main__':\n    print('CrewAI scaffold ready')`; if(cfg.aiFrameworks.includes('langgraph')) frameworkDir['agent_langgraph.py']=`# LangGraph scaffold\nif __name__=='__main__':\n    print('LangGraph scaffold ready')`; if(cfg.aiFrameworks.includes('semantic-kernel')) frameworkDir['agent_sk.py']=`# Semantic Kernel scaffold\nif __name__=='__main__':\n    print('Semantic Kernel scaffold ready')`; if(cfg.aiFrameworks.includes('autogen')) frameworkDir['agent_autogen.py']=`# AutoGen scaffold\nif __name__=='__main__':\n    print('AutoGen scaffold ready')`; }
+      const protocolDir = cfg.protocols.includes('mcp') ? { 'mcp': { 'client.js': `// Minimal MCP client stub` } } : undefined;
+      const eslintFile = cfg.tools.includes('eslint') ? { '.eslintrc.cjs': `module.exports={env:{browser:true,es2021:true,node:true},extends:['eslint:recommended'${reactSelected?',"plugin:react/recommended"':''}],parserOptions:{ecmaVersion:12,sourceType:'module'},rules:{}};` } : {};
+      const tsConfig = useTS ? { 'tsconfig.json': JSON.stringify({ compilerOptions:{target:'ES2020',module:'ESNext',jsx:'react-jsx',moduleResolution:'Node',esModuleInterop:true,strict:true,skipLibCheck:true}, include:['src'] }, null, 2)} : {};
+      const dockerFiles = cfg.tools.includes('docker') ? { 'Dockerfile': `FROM node:20-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nCMD [\"npm\",\"run\",\"dev\"]`, 'docker-compose.yml': `version: '3.9'\nservices:\n  app:\n    build: .\n    ports:\n      - '5173:5173'\n      - '3001:3001'\n    environment:\n      - NODE_ENV=development` } : {};
+  // Derive Python requirements if any Python-based components selected
+  const pyPackages = new Set();
+  if(fastapiSelected) { pyPackages.add('fastapi'); pyPackages.add('uvicorn'); }
+  cfg.llmProviders.forEach(id=>{ if(id==='openai') pyPackages.add('openai'); if(id==='anthropic') pyPackages.add('anthropic'); if(id==='gemini') pyPackages.add('google-generativeai'); if(id==='xai') pyPackages.add('groq'); if(id==='ollama') pyPackages.add('requests'); });
+  cfg.aiFrameworks.forEach(id=>{ if(id==='langchain') pyPackages.add('langchain'); if(id==='crewai') pyPackages.add('crewai'); if(id==='langgraph') pyPackages.add('langgraph'); if(id==='semantic-kernel') pyPackages.add('semantic-kernel'); if(id==='autogen') pyPackages.add('pyautogen'); });
+  const requirementsFile = pyPackages.size ? { 'requirements.txt': Array.from(pyPackages).sort().join('\n')+'\n' } : {};
+  const base = { [cfg.projectName]: { 'README.md': generateReadme(cfg), '.env': generateEnv(cfg), 'package.json': JSON.stringify(pkg,null,2), ...eslintFile, ...tsConfig, ...dockerFiles, ...indexHtml, ...requirementsFile, ...(Object.keys(srcDir).length?{src:srcDir}:{}), ...(serverDir?{server:serverDir}:{}), ...(apiDir?{api:apiDir}:{}), ...(dbDir?{database:dbDir}:{}), ...(providersDir||frameworkDir?{agents:{...(frameworkDir||{}), providers:providersDir||{}, ...(protocolDir||{})}}:{}), } }; return base; }
 
     function generateScript(cfg){
       const date=new Date().toISOString().split('T')[0];
-      const pyDeps = [];
-      const nodeDeps = [];
-      cfg.aiFrameworks.forEach(id=>{const f=TECH_STACK.aiFrameworks.find(t=>t.id===id); if(f) f.commands.forEach(c=>{if(c.startsWith('pip ')) pyDeps.push(c.replace('pip install','').trim());});});
-      cfg.llmProviders.forEach(id=>{const p=TECH_STACK.llmProviders.find(t=>t.id===id); if(p) p.commands.forEach(c=>{if(c.startsWith('pip ')) pyDeps.push(c.replace('pip install','').trim());});});
-      const lines = [
-        '#!/usr/bin/env bash', '# Generated by GenAppXpress', `# Date: ${date}`, 'set -e', '', 'echo "[INFO] Creating project '+cfg.projectName+'"',
-        `mkdir -p ${cfg.projectName}`, 'cd '+cfg.projectName,
-      ];
-      if(cfg.backend.includes('express')) {lines.push('echo "[INFO] Init Node"','npm init -y','npm install express cors helmet');}
-      if(cfg.frontend.includes('react')) {lines.push('echo "[INFO] Adding React"','npm install react react-dom');}
-      if(pyDeps.length){lines.push('echo "[INFO] Python deps"','python3 -m venv .venv || python -m venv .venv','source .venv/bin/activate','pip install '+[...new Set(pyDeps)].join(' '));}
-      if(cfg.protocols.includes('mcp')) {lines.push('echo "[INFO] MCP SDK"','npm install mcp-sdk');}
-      lines.push('echo "[INFO] Writing .env"','cat > .env <<EOF', generateEnv(cfg),'EOF');
+      const pyDeps=new Set(); const nodeDeps=new Set();
+      if(cfg.backend.includes('express')) ['express','cors','helmet'].forEach(d=>nodeDeps.add(d));
+      if(cfg.frontend.includes('react')) ['react','react-dom','vite'].forEach(d=>nodeDeps.add(d));
+      if(cfg.frontend.includes('vue')) ['vue','vite'].forEach(d=>nodeDeps.add(d));
+      if(cfg.frontend.includes('nextjs')) ['next','react','react-dom'].forEach(d=>nodeDeps.add(d));
+      if(cfg.database.includes('postgresql')) nodeDeps.add('pg');
+      if(cfg.database.includes('mongodb')) nodeDeps.add('mongoose');
+      if(cfg.database.includes('redis')) nodeDeps.add('ioredis');
+      if(cfg.protocols.includes('mcp')) nodeDeps.add('mcp-sdk');
+      if(cfg.tools.includes('eslint')) nodeDeps.add('eslint');
+      if(cfg.tools.includes('typescript')) ['typescript','@types/node'].forEach(d=>nodeDeps.add(d));
+      cfg.aiFrameworks.forEach(id=>{const f=TECH_STACK.aiFrameworks.find(t=>t.id===id); if(f) f.commands.forEach(c=>{if(c.startsWith('pip ')) c.replace('pip install','').trim().split(/\s+/).forEach(p=>pyDeps.add(p));});});
+      cfg.llmProviders.forEach(id=>{const p=TECH_STACK.llmProviders.find(t=>t.id===id); if(p) p.commands.forEach(c=>{if(c.startsWith('pip ')) c.replace('pip install','').trim().split(/\s+/).forEach(q=>pyDeps.add(q));});});
+      const lines=['#!/usr/bin/env bash','# Generated by GenAppXpress',`# Date: ${date}`,'set -e','',`echo "[INFO] Creating project ${cfg.projectName}"`,`mkdir -p ${cfg.projectName}`,'cd '+cfg.projectName,'echo "[INFO] Installing Node dependencies"','npm install '+(nodeDeps.size?Array.from(nodeDeps).join(' '):'react')];
+      if(pyDeps.size){ lines.push('echo "[INFO] Setting up Python virtual environment"','python3 -m venv .venv || python -m venv .venv','source .venv/bin/activate','pip install '+Array.from(pyDeps).join(' ')); }
+  const envContent = generateEnv(cfg).replace(/`/g,'\`');
+  lines.push('echo "[INFO] Writing .env"',`printf '%s\n' "${envContent.split('\n').join('\\n')}" > .env`);
+      if(cfg.backend.includes('fastapi')) lines.push('echo "[INFO] To run FastAPI: source .venv/bin/activate && uvicorn api.main:app --reload"');
+      if(cfg.backend.includes('express')) lines.push('echo "[INFO] To run Express: npm run server"');
+      if(cfg.frontend.includes('react')||cfg.frontend.includes('vue')) lines.push('echo "[INFO] To run Frontend: npm run dev"');
+      if(cfg.frontend.includes('nextjs')) lines.push('echo "[INFO] To run Next.js: npm run dev"');
       lines.push('echo "[DONE] Scaffold complete"');
       return lines.join('\n');
     }
