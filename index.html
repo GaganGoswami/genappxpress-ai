@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en" data-color-scheme="light">
+<head>
+  <meta charset="UTF-8" />
+  <title>GenAppXpress – AI App Scaffolder</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="Instantly scaffold full‑stack & AI agentic applications with visual wizard + script export." />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='none' stroke='%230c8a94' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2 2 7l10 5 10-5-10-5Z'/%3E%3Cpath d='m2 17 10 5 10-5'/%3E%3Cpath d='m2 12 10 5 10-5'/%3E%3C/svg%3E"/>
+  <!-- Fonts (system fallback heavy) -->
+  <style>
+    :root {
+      /* Color Primitives */
+      --color-white: #ffffff; --color-black:#000; --color-cream-50:#fcfcf9; --color-cream-100:#fffffd;
+      --color-gray-200:#f5f5f5; --color-gray-300:#a7a9a9; --color-gray-400:#777c7c; --color-slate-500:#626c71;
+      --color-brown-600:#5e5240; --color-charcoal-700:#1f2121; --color-charcoal-800:#262828; --color-slate-900:#13343b;
+      --color-teal-300:#32b8c6; --color-teal-400:#2da6b2; --color-teal-500:#21808d; --color-teal-600:#1d7480; --color-teal-700:#1a6873; --color-teal-800:#2996a1;
+      --color-red-400:#ff5459; --color-red-500:#c0152f; --color-orange-400:#e68161; --color-orange-500:#a84b2f;
+      /* Semantic (light) */
+      --color-background: var(--color-cream-50);
+      --color-surface: var(--color-cream-100);
+      --color-text: var(--color-slate-900);
+      --color-text-secondary: var(--color-slate-500);
+      --color-primary: var(--color-teal-500);
+      --color-primary-hover: var(--color-teal-600);
+      --color-primary-active: var(--color-teal-700);
+      --color-border: rgba(0,0,0,0.12);
+      --color-border-strong: rgba(0,0,0,0.22);
+      --color-elevated: #fff;
+      --color-success: #218b57;
+      --color-warning: #a86a00;
+      --color-error: var(--color-red-500);
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.08); --shadow-md:0 4px 12px rgba(0,0,0,0.12); --shadow-lg:0 6px 20px rgba(0,0,0,0.18);
+      --font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --font-size-xs:11px; --font-size-sm:12px; --font-size-base:14px; --font-size-md:14px; --font-size-lg:16px; --font-size-xl:18px; --font-size-2xl:20px; --font-size-3xl:24px; --font-size-4xl:30px;
+      --font-weight-normal:400; --font-weight-medium:500; --font-weight-semibold:550; --font-weight-bold:600;
+      --space-0:0; --space-1:1px; --space-2:2px; --space-4:4px; --space-6:6px; --space-8:8px; --space-10:10px; --space-12:12px; --space-16:16px; --space-20:20px; --space-24:24px; --space-32:32px;
+      --radius-sm:6px; --radius-base:8px; --radius-md:10px; --radius-lg:12px; --radius-full:9999px;
+      --duration-fast:120ms; --duration-normal:220ms; --duration-slow:420ms;
+      --ease-standard:cubic-bezier(.4,0,.2,1);
+    }
+    [data-color-scheme="dark"] {
+      --color-background: var(--color-charcoal-700);
+      --color-surface: var(--color-charcoal-800);
+      --color-text: var(--color-gray-200);
+      --color-text-secondary: rgba(167,169,169,0.7);
+      --color-primary: var(--color-teal-300);
+      --color-primary-hover: var(--color-teal-400);
+      --color-primary-active: var(--color-teal-800);
+      --color-border: rgba(255,255,255,0.14);
+      --color-border-strong: rgba(255,255,255,0.28);
+      --color-elevated: #222;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.5); --shadow-md:0 4px 12px rgba(0,0,0,0.55); --shadow-lg:0 6px 20px rgba(0,0,0,0.6);
+    }
+    html,body {height:100%;}
+    body {margin:0; font-family:var(--font-family-base); background:var(--color-background); color:var(--color-text); -webkit-font-smoothing:antialiased;}
+    h1,h2,h3 {font-weight:var(--font-weight-bold); line-height:1.15; letter-spacing:-0.5px; margin:0 0 var(--space-16);} 
+    p {line-height:1.5;}
+    button {font-family:inherit; font-size:var(--font-size-base); cursor:pointer; border-radius:var(--radius-base); border:1px solid var(--color-border); background:var(--color-primary); color:#fff; padding:8px 16px; font-weight:var(--font-weight-medium); transition:all var(--duration-normal) var(--ease-standard);} 
+    button:hover {background:var(--color-primary-hover);} button:active{background:var(--color-primary-active);} button:focus-visible{outline:2px solid var(--color-primary); outline-offset:2px;}
+    a {color:var(--color-primary); text-decoration:none;} a:hover{text-decoration:underline;}
+    .app-shell {max-width:1480px; margin:0 auto; padding:var(--space-24) var(--space-24) 160px;}
+    header {display:flex; align-items:center; gap:var(--space-16); margin-bottom:var(--space-24);}
+    .logo {width:44px;height:44px;display:grid;place-items:center;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--color-teal-500),var(--color-teal-300));color:#fff;font-weight:600;font-size:18px;box-shadow:var(--shadow-md);}
+    .title-block {flex:1;}
+    .title-block h1 {font-size:var(--font-size-3xl); margin:0 0 4px;}
+    .title-block .tagline {font-size:var(--font-size-sm); color:var(--color-text-secondary);}
+    .theme-toggle {background:var(--color-surface); color:var(--color-text); border:1px solid var(--color-border);}
+    .theme-toggle:hover {background:var(--color-elevated);} 
+    .wizard {display:grid; gap:var(--space-24);} 
+    .steps-bar {display:flex; flex-wrap:wrap; gap:12px;}
+    .step-indicator {width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;background:var(--color-surface);color:var(--color-text-secondary);border:2px solid var(--color-border);transition:all var(--duration-normal) var(--ease-standard);position:relative;}
+    .step-indicator.active {background:var(--color-primary); color:#fff; border-color:var(--color-primary);} 
+    .step-indicator.completed {background:var(--color-success); color:#fff; border-color:var(--color-success);} 
+    .wizard-panels {position:relative;}
+    .wizard-step {display:none; animation:fadeIn .3s var(--ease-standard);} .wizard-step.active{display:block;}
+    @keyframes fadeIn {from {opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
+    .grid {display:grid; gap:16px;} 
+    .tech-grid {display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
+    .section {background:var(--color-surface); border:1px solid var(--color-border); padding:20px 20px 28px; border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); position:relative;}
+    .section h2 {margin-top:0; font-size:18px;}
+    .inline-fields {display:flex; flex-wrap:wrap; gap:14px;}
+    .field {display:flex; flex-direction:column; gap:6px; flex:1 1 240px;}
+    .field label {font-size:12px; font-weight:500; letter-spacing:.5px; text-transform:uppercase; color:var(--color-text-secondary);} 
+    .field input,.field select,.field textarea {font:inherit; padding:10px 12px; border-radius:var(--radius-base); border:1px solid var(--color-border); background:var(--color-elevated); color:var(--color-text); resize:vertical; min-height:42px;}
+    .field textarea {min-height:90px;}
+    .actions-bar {display:flex; gap:12px; justify-content:space-between; margin-top:24px; align-items:center; flex-wrap:wrap;}
+    .nav-buttons {display:flex; gap:12px;}
+    .pill {font-size:11px; padding:4px 8px; border-radius:var(--radius-full); background:var(--color-primary); color:#fff; font-weight:500; letter-spacing:.5px;}
+    .tech-option {display:flex; flex-direction:column; gap:6px; padding:16px 14px 14px; border:2px solid var(--color-border); border-radius:var(--radius-lg); background:var(--color-elevated); cursor:pointer; position:relative; transition:all var(--duration-normal) var(--ease-standard); min-height:120px;}
+    .tech-option:hover {border-color:var(--color-primary); box-shadow:var(--shadow-md);} 
+    .tech-option.selected {border-color:var(--color-primary); background:rgba(33,128,141,0.06);} 
+    .tech-option.incompatible {opacity:.45; cursor:not-allowed; border-color:var(--color-error);} 
+    .tech-option h4 {margin:0 0 4px; font-size:14px; font-weight:600;}
+    .tech-option p {margin:0; font-size:12px; color:var(--color-text-secondary); line-height:1.4;}
+    .checkbox {position:absolute; top:10px; right:10px; width:20px; height:20px; display:grid; place-items:center; border:2px solid var(--color-border); border-radius:6px; background:var(--color-surface); font-size:13px; font-weight:600; color:var(--color-primary);} 
+    .tech-option.selected .checkbox {background:var(--color-primary); color:#fff; border-color:var(--color-primary);} 
+    .badge-bar {display:flex; gap:6px; flex-wrap:wrap;}
+    .warning {background:rgba(255,180,0,0.1); border:1px solid rgba(255,180,0,0.4); padding:10px 12px; border-radius:var(--radius-base); font-size:12px; color:#d29700; display:flex; gap:8px; align-items:flex-start;}
+    .error {background:rgba(255,72,72,0.1); border:1px solid rgba(255,72,72,0.5); padding:10px 12px; border-radius:var(--radius-base); font-size:12px; color:#d92323; display:flex; gap:8px; align-items:flex-start;}
+    .code-block {font-family:var(--font-family-mono); font-size:12.5px; background:#111b1c; color:#d6f2f4; padding:14px 16px; border-radius:var(--radius-lg); overflow:auto; line-height:1.4; border:1px solid #083940; max-height:420px;}
+    .file-tree {font-family:var(--font-family-mono); font-size:12.5px; line-height:1.5; background:var(--color-elevated); border:1px solid var(--color-border); border-radius:var(--radius-lg); padding:12px 14px; max-height:420px; overflow:auto;}
+    .tree-dir {color:var(--color-primary); font-weight:600;}
+    .footer-note {margin-top:60px; font-size:11px; opacity:.65; text-align:center;}
+    .template-modal {position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:flex-start; justify-content:center; padding:60px 20px; z-index:60;} 
+    .template-dialog {max-width:880px; width:100%; background:var(--color-surface); border:1px solid var(--color-border); border-radius:18px; padding:28px 34px 44px; box-shadow:var(--shadow-lg); position:relative; display:grid; gap:20px;} 
+    .close-btn {position:absolute; top:14px; right:14px; background:var(--color-error); border:none; padding:4px 10px; font-size:12px;}
+    .template-grid {display:grid; gap:16px; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
+    .template-card {border:1px solid var(--color-border); border-radius:14px; padding:14px 14px 54px; position:relative; background:var(--color-elevated); display:flex; flex-direction:column; gap:6px;}
+    .template-card h4 {margin:0; font-size:14px; letter-spacing:.2px;}
+    .template-card p {margin:0; font-size:12px; line-height:1.4; color:var(--color-text-secondary);} 
+    .template-card button {position:absolute; left:12px; bottom:12px; right:12px; width:auto;}
+    .secondary {background:var(--color-surface); color:var(--color-text); border:1px solid var(--color-border);} .secondary:hover{background:var(--color-elevated);} 
+    .ghost {background:transparent; color:var(--color-text-secondary); border:1px dashed var(--color-border);} .ghost:hover{color:var(--color-text); background:var(--color-surface);} 
+    .inline-link {font-size:12px;}
+    .divider {height:1px; background:var(--color-border); margin:24px -4px 12px;}
+    .tag {background:rgba(33,128,141,0.1); color:var(--color-primary); border:1px solid rgba(33,128,141,0.25); font-size:10px; font-weight:600; letter-spacing:.5px; padding:3px 6px 2px; border-radius:var(--radius-full); text-transform:uppercase;}
+    .sr-only {position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;}
+    @media (max-width:980px){
+      .inline-fields {flex-direction:column;}
+      header {flex-wrap:wrap;}
+      .steps-bar {justify-content:flex-start;}
+    }
+  </style>
+  <script>
+    // Dark mode auto preference
+    (function(){
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const stored = localStorage.getItem('genappxpress-theme');
+      const mode = stored || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-color-scheme', mode);
+    })();
+  </script>
+  <!-- React / Babel / Libraries -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+</head>
+<body>
+  <div id="root" role="application" aria-label="GenAppXpress App Scaffolder"></div>
+  <noscript>You need JavaScript enabled to run this application.</noscript>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback } = React;
+
+    /************************************\n     * Data: Tech Stack Definitions     *
+     ************************************/
+    const TECH_STACK = {
+      frontend: [
+        {id:'react',name:'React',description:'UI library',compatible:['vite','webpack','typescript','tailwind','jest','express','fastapi'],commands:['npm install react react-dom'],configFiles:['src/App.jsx']},
+        {id:'vue',name:'Vue.js',description:'Progressive framework',compatible:['vite','webpack','typescript'],commands:['npm install vue'],configFiles:['src/main.js']},
+        {id:'nextjs',name:'Next.js',description:'SSR React framework',compatible:['typescript','tailwind'],commands:['npx create-next-app@latest'],configFiles:['next.config.js']},
+      ],
+      backend: [
+        {id:'express',name:'Express.js',description:'Fast Node.js web framework',compatible:['react','vue','nextjs','postgresql','mysql','mongodb','sqlite','redis','langchain','openai'],commands:['npm install express cors helmet'],configFiles:['server/server.js']},
+        {id:'fastapi',name:'FastAPI',description:'Python high-performance API',compatible:['postgresql','mysql','sqlite','langchain','openai','anthropic','gemini'],commands:['pip install fastapi uvicorn'],configFiles:['api/main.py']},
+      ],
+      database: [
+        {id:'postgresql',name:'PostgreSQL',description:'Advanced RDBMS',compatible:['express','fastapi','springboot','django','langchain','mcp'],commands:['npm install pg'],configFiles:['database/schema.sql']},
+        {id:'mongodb',name:'MongoDB',description:'Document database',compatible:['express','node'],commands:['npm install mongoose'],configFiles:['database/models']},
+        {id:'redis',name:'Redis',description:'In-memory cache & store',compatible:['express','fastapi','langchain'],commands:['npm install ioredis'],configFiles:['database/redis.js']},
+      ],
+      tools: [
+        {id:'docker',name:'Docker',description:'Containers & compose',compatible:['*'],commands:['docker --version'],configFiles:['Dockerfile','docker-compose.yml']},
+        {id:'eslint',name:'ESLint',description:'Linting',compatible:['react','vue','express'],commands:['npm install -D eslint'],configFiles:['.eslintrc.cjs']},
+        {id:'typescript',name:'TypeScript',description:'Static typing',compatible:['react','vue','nextjs','express'],commands:['npm install -D typescript @types/node'],configFiles:['tsconfig.json']},
+      ],
+      aiFrameworks: [
+        {id:'langchain',name:'LangChain',description:'Chaining & agents',compatible:['openai','anthropic','gemini','xai','ollama','mcp','fastapi','express'],commands:['pip install langchain'],configFiles:['agents/agent.py']},
+        {id:'crewai',name:'CrewAI',description:'Role-based multi-agent',compatible:['openai','anthropic','gemini','xai','ollama'],commands:['pip install crewai'],configFiles:['agents/crew_agent.py']},
+        {id:'langgraph',name:'LangGraph',description:'Graph orchestration',compatible:['openai','anthropic','gemini'],commands:['pip install langgraph'],configFiles:['agents/graph/graph.py']},
+        {id:'semantic-kernel',name:'Semantic Kernel',description:'Model-agnostic orchestration',compatible:['openai','anthropic','gemini','xai'],commands:['pip install semantic-kernel'],configFiles:['agents/sk/kernel.py']},
+        {id:'autogen',name:'Microsoft AutoGen',description:'Multi-agent orchestration',compatible:['openai','anthropic','gemini'],commands:['pip install pyautogen'],configFiles:['agents/autogen/loop.py']},
+      ],
+      llmProviders: [
+        {id:'openai',name:'OpenAI',description:'Agents + GPT models',compatible:['langchain','crewai','langgraph','semantic-kernel','autogen'],commands:['pip install openai'],configFiles:['providers/openai_client.py']},
+        {id:'anthropic',name:'Anthropic',description:'Claude models',compatible:['langchain','crewai','langgraph','semantic-kernel'],commands:['pip install anthropic'],configFiles:['providers/anthropic_client.py']},
+        {id:'gemini',name:'Google Gemini',description:'Multimodal models',compatible:['langchain','crewai','langgraph'],commands:['pip install google-generativeai'],configFiles:['providers/gemini_client.py']},
+        {id:'xai',name:'xAI Grok',description:'Grok models',compatible:['langchain','crewai'],commands:['pip install groq'],configFiles:['providers/xai_client.py']},
+        {id:'ollama',name:'Ollama',description:'Local models runtime',compatible:['langchain','crewai','semantic-kernel'],commands:[],configFiles:['providers/ollama_client.py']},
+      ],
+      protocols: [
+        {id:'mcp',name:'MCP',description:'Model Context Protocol integration',compatible:['openai','anthropic','langchain','postgresql'],commands:['npm install mcp-sdk'],configFiles:['agents/mcp/client.js']},
+        {id:'swarm',name:'Swarm',description:'Lightweight agent protocol concept',compatible:['openai','anthropic'],commands:[],configFiles:['agents/swarm/readme.md']},
+      ],
+      templates: [
+        {id:'ai-chatbot',name:'AI Chatbot',description:'Streaming chat UI + provider adapter',preset:{frontend:['react'],backend:['express'],aiFrameworks:['langchain'],llmProviders:['openai'],protocols:[]}},
+        {id:'rag-service',name:'RAG Service',description:'Embedding + vector search API',preset:{backend:['fastapi'],aiFrameworks:['langchain'],llmProviders:['openai'],protocols:[]}},
+        {id:'web-research',name:'Web Research Agent',description:'Planning + browsing tools',preset:{frontend:['react'],backend:['express'],aiFrameworks:['crewai'],llmProviders:['openai'],protocols:['mcp']}},
+        {id:'process-automator',name:'Process Automator',description:'Role agents for workflows',preset:{backend:['fastapi'],aiFrameworks:['crewai'],llmProviders:['anthropic'],protocols:[]}},
+        {id:'code-assistant-mcp',name:'Code Assistant + MCP',description:'Dev agent w/ repo tools',preset:{frontend:['react'],backend:['express'],aiFrameworks:['langchain'],llmProviders:['anthropic'],protocols:['mcp']}},
+        {id:'multimodal-assistant',name:'Multimodal Assistant',description:'Image + text reasoning',preset:{frontend:['react'],backend:['fastapi'],aiFrameworks:['langchain'],llmProviders:['gemini'],protocols:[]}},
+        {id:'local-first',name:'Local-first App',description:'Offline dev w/ Ollama',preset:{frontend:['react'],backend:['express'],aiFrameworks:['langchain'],llmProviders:['ollama'],protocols:[]}},
+      ]
+    };
+
+    const CATEGORY_LABELS = {
+      frontend:'Frontend', backend:'Backend', database:'Database', tools:'Dev Tools', aiFrameworks:'AI Frameworks', llmProviders:'LLM Providers', protocols:'Protocols'
+    };
+
+    /************************************\n     * Helpers                          *
+     ************************************/
+    const deepClone = obj => JSON.parse(JSON.stringify(obj));
+
+    function checkCompatibility(selected){
+      const conflicts=[]; const warnings=[];
+      // Basic frontend-backend compatibility
+      selected.frontend.forEach(fid=>{selected.backend.forEach(bid=>{
+        const f=TECH_STACK.frontend.find(t=>t.id===fid); const b=TECH_STACK.backend.find(t=>t.id===bid);
+        if(f && b){
+          const frontOk = f.compatible.includes(bid) || f.compatible.includes('*');
+            const backOk = b.compatible.includes(fid) || b.compatible.includes('*');
+          if(!frontOk && !backOk){conflicts.push(`${f.name} may not pair cleanly with ${b.name}`);} }
+      });});
+      // AI warnings
+      selected.aiFrameworks.forEach(aid=>{const af=TECH_STACK.aiFrameworks.find(a=>a.id===aid); if(!af) return; selected.llmProviders.forEach(pid=>{if(!af.compatible.includes(pid)){warnings.push(`${af.name} not validated for provider ${pid} – check docs.`);}});});
+      // MCP requirement sample
+      if(selected.protocols.includes('mcp') && !selected.llmProviders.some(p=>['openai','anthropic'].includes(p))){warnings.push('MCP usually paired with OpenAI or Anthropic for richer tool calling.');}
+      return {conflicts,warnings};
+    }
+
+    function generateEnv(selected){
+      let lines=[]; if(selected.llmProviders.includes('openai')) lines.push('OPENAI_API_KEY=');
+      if(selected.llmProviders.includes('anthropic')) lines.push('ANTHROPIC_API_KEY=');
+      if(selected.llmProviders.includes('gemini')) lines.push('GEMINI_API_KEY=');
+      if(selected.llmProviders.includes('xai')) lines.push('XAI_API_KEY=');
+      if(selected.llmProviders.includes('ollama')) lines.push('OLLAMA_HOST=localhost');
+      lines.push('NODE_ENV=development');
+      return lines.join('\n');
+    }
+
+    function generateReadme(cfg){
+      return `# ${cfg.projectName}\n\nGenerated with **GenAppXpress**.\n\n## Selected Stack\n${Object.keys(CATEGORY_LABELS).map(cat=>{const arr=cfg[cat]; if(!arr||!arr.length) return ''; return `- **${CATEGORY_LABELS[cat]}:** ${arr.join(', ')}`;}).filter(Boolean).join('\n')}\n\n## Getting Started\nRun the generated setup script or follow manual steps.\n\n## AI Notes\nIf using AI providers set the API keys in .env before running agent scripts.\n`;}
+
+    function generateStructure(cfg){
+      const base = {
+        [cfg.projectName]: {
+          'README.md': generateReadme(cfg),
+          '.env': generateEnv(cfg),
+          'package.json': '{\\n  "name": "'+cfg.projectName+'",\\n  "private": true\\n}',
+          'agents': cfg.aiFrameworks.length||cfg.llmProviders.length?{
+            'main_agent.py': '# Example agent entrypoint\nprint("Agent online")',
+            'config': {'providers.yaml':'# provider config placeholder'},
+            ...(cfg.protocols.includes('mcp')?{'mcp':{'client.js':'// MCP client placeholder'}}:{}),
+          }:undefined,
+          'server': cfg.backend.includes('express')?{'server.js':'// express server placeholder'}:undefined,
+          'src': cfg.frontend.includes('react')?{'App.jsx':'// React app placeholder','main.jsx':'// entry'}:undefined,
+          'database': cfg.database.length?{'schema.sql':'-- SQL schema'}:undefined
+        }
+      };
+      return base;
+    }
+
+    function generateScript(cfg){
+      const date=new Date().toISOString().split('T')[0];
+      const pyDeps = [];
+      const nodeDeps = [];
+      cfg.aiFrameworks.forEach(id=>{const f=TECH_STACK.aiFrameworks.find(t=>t.id===id); if(f) f.commands.forEach(c=>{if(c.startsWith('pip ')) pyDeps.push(c.replace('pip install','').trim());});});
+      cfg.llmProviders.forEach(id=>{const p=TECH_STACK.llmProviders.find(t=>t.id===id); if(p) p.commands.forEach(c=>{if(c.startsWith('pip ')) pyDeps.push(c.replace('pip install','').trim());});});
+      const lines = [
+        '#!/usr/bin/env bash', '# Generated by GenAppXpress', `# Date: ${date}`, 'set -e', '', 'echo "[INFO] Creating project '+cfg.projectName+'"',
+        `mkdir -p ${cfg.projectName}`, 'cd '+cfg.projectName,
+      ];
+      if(cfg.backend.includes('express')) {lines.push('echo "[INFO] Init Node"','npm init -y','npm install express cors helmet');}
+      if(cfg.frontend.includes('react')) {lines.push('echo "[INFO] Adding React"','npm install react react-dom');}
+      if(pyDeps.length){lines.push('echo "[INFO] Python deps"','python3 -m venv .venv || python -m venv .venv','source .venv/bin/activate','pip install '+[...new Set(pyDeps)].join(' '));}
+      if(cfg.protocols.includes('mcp')) {lines.push('echo "[INFO] MCP SDK"','npm install mcp-sdk');}
+      lines.push('echo "[INFO] Writing .env"','cat > .env <<EOF', generateEnv(cfg),'EOF');
+      lines.push('echo "[DONE] Scaffold complete"');
+      return lines.join('\n');
+    }
+
+    function flattenStructure(struct, prefix=''){ const files=[]; Object.entries(struct||{}).forEach(([name,val])=>{const path= prefix? prefix+name: name; if(typeof val === 'string'){files.push(path);} else if(val && typeof val === 'object'){files.push(path+'/'); files.push(...flattenStructure(val, path+'/'));}}); return files; }
+
+    async function exportZip(cfg){
+      const structure = generateStructure(cfg);
+      const zip = new JSZip();
+      function add(obj, base='') {Object.entries(obj).forEach(([k,v])=>{if(typeof v === 'string') zip.file(base+k,v); else if(v && typeof v==='object'){add(v, base+k+'/');} });}
+      add(structure);
+      zip.file('setup.sh', generateScript(cfg));
+      const blob = await zip.generateAsync({type:'blob'});
+      saveAs(blob, `${cfg.projectName}-scaffold.zip`);
+    }
+
+    /************************************\n     * Components                        *
+     ************************************/
+
+    const StepIndicators = ({currentStep, steps, setStep}) => (
+      <div className="steps-bar" role="tablist" aria-label="Wizard Steps">
+        {steps.map((label,i)=>{const step=i+1; const state= step===currentStep?'active': (step<currentStep?'completed':''); return (
+          <button key={label} className={"step-indicator "+state} aria-selected={step===currentStep} aria-label={`Step ${step}: ${label}`} onClick={()=>setStep(step)}>{step}</button>
+        );})}
+      </div>
+    );
+
+    const TechOption = ({tech, category, isSelected, onToggle, isIncompatible}) => (
+      <div className={"tech-option "+(isSelected?'selected ':'')+(isIncompatible?'incompatible':'')} role="checkbox" aria-checked={isSelected} aria-label={tech.name+(isIncompatible? ' incompatible':'')} tabIndex={isIncompatible?-1:0} onKeyDown={(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault(); !isIncompatible && onToggle(category, tech.id);}}} onClick={()=>!isIncompatible && onToggle(category, tech.id)}>
+        <div className="checkbox">{isSelected?'✓':''}</div>
+        <h4>{tech.name}</h4>
+        <p>{tech.description}</p>
+        <div className="badge-bar">
+          {tech.compatible && tech.compatible.slice(0,3).map(c => <span key={c} className="tag" title="Compatible tag">{c}</span>)}
+        </div>
+      </div>
+    );
+
+    const TemplateModal = ({onClose, applyTemplate}) => {
+      const list = TECH_STACK.templates;
+      return (
+        <div className="template-modal" role="dialog" aria-modal="true" aria-label="Template Selection">
+          <div className="template-dialog">
+            <button className="close-btn" onClick={onClose} aria-label="Close template dialog">Close</button>
+            <h2 style={{marginTop:0}}>Templates</h2>
+            <p style={{marginTop:-8}}>Choose a predefined stack (includes AI selections).</p>
+            <div className="template-grid">
+              {list.map(t => (
+                <div className="template-card" key={t.id}>
+                  <h4>{t.name}</h4>
+                  <p>{t.description}</p>
+                  <button onClick={()=>applyTemplate(t.preset)}>Use</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const FileTree = ({cfg}) => {
+      const structure = useMemo(()=>generateStructure(cfg),[cfg]);
+      const files = flattenStructure(structure);
+      return <div className="file-tree" aria-label="File tree preview">{files.map(f=> <div key={f}><span className={f.endsWith('/')? 'tree-dir':''}>{f}</span></div>)}</div>;
+    };
+
+    const ScriptPreview = ({cfg}) => {
+      const script = useMemo(()=>generateScript(cfg),[cfg]);
+      return <pre className="code-block" aria-label="Script Preview">{script}</pre>;
+    };
+
+    const MultiSelectCategory = ({category, selected, onToggle, computeIncompat}) => {
+      const items = TECH_STACK[category] || [];
+      return (
+        <div className="section" aria-labelledby={`heading-${category}`}>
+          <h2 id={`heading-${category}`}>{CATEGORY_LABELS[category]}</h2>
+          <div className="tech-grid">
+            {items.map(item => {
+              const isSelected = selected.includes(item.id);
+              const isIncompatible = computeIncompat && computeIncompat(category,item);
+              return <TechOption key={item.id} tech={item} category={category} isSelected={isSelected} onToggle={onToggle} isIncompatible={isIncompatible} />;
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    const App = () => {
+      const [currentStep,setCurrentStep]=useState(1);
+      const [projectName,setProjectName]=useState('my-awesome-project');
+      const [description,setDescription]=useState('An awesome project generated by GenAppXpress');
+      const [author,setAuthor]=useState('');
+      const [license,setLicense]=useState('MIT');
+      const [showTemplates,setShowTemplates]=useState(false);
+      const [darkMode,setDarkMode]=useState(document.documentElement.getAttribute('data-color-scheme')==='dark');
+      const emptySelection = {frontend:[], backend:[], database:[], tools:[], aiFrameworks:[], llmProviders:[], protocols:[]};
+      const [selected,setSelected]=useState(emptySelection);
+
+      const onToggle=(category,id)=>{setSelected(prev=>{const list=prev[category]; const exists=list.includes(id); return {...prev,[category]: exists? list.filter(x=>x!==id): [...list,id]};});};
+      const applyTemplate = (preset)=>{ setSelected(prev=> ({...prev, ...Object.fromEntries(Object.keys(emptySelection).map(k=>[k, preset[k] || prev[k]]))})); setShowTemplates(false); };
+
+      const cfg = useMemo(()=>({projectName, description, author, license, ...selected}),[projectName, description, author, license, selected]);
+      const {conflicts,warnings}=useMemo(()=>checkCompatibility(selected),[selected]);
+
+      const computeIncompat = function(category, item) {
+        if (category === 'frontend') {
+          if (selected.backend.length) {
+            return selected.backend.some(function(b) {
+              var back = TECH_STACK.backend.find(function(t) { return t.id === b; });
+              var ok = (back && back.compatible && back.compatible.indexOf(item.id) !== -1)
+                || (item.compatible && item.compatible.indexOf(b) !== -1)
+                || (item.compatible && item.compatible.indexOf('*') !== -1);
+              return !ok;
+            });
+          }
+        }
+        return false;
+      };
+
+      const toggleTheme=()=>{const mode = !darkMode?'dark':'light'; setDarkMode(!darkMode); document.documentElement.setAttribute('data-color-scheme',mode); localStorage.setItem('genappxpress-theme',mode);};
+
+      const canNext = () => {
+        if(currentStep===1) return projectName.trim().length>2; if(currentStep===2) return Object.values(selected).some(a=>a.length); return true; };
+
+      return (
+        <div className="app-shell">
+          <header>
+            <div className="logo" aria-hidden>GX</div>
+            <div className="title-block">
+              <h1>GenAppXpress <span className="pill">ALPHA</span></h1>
+              <div className="tagline">Visual full‑stack & agentic AI scaffolding · Export scripts & project files</div>
+            </div>
+            <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle color theme">{darkMode? 'Light Mode':'Dark Mode'}</button>
+            <button className="secondary" onClick={()=>setShowTemplates(true)}>Templates</button>
+          </header>
+
+          <div className="wizard">
+            <StepIndicators currentStep={currentStep} steps={['Project','Tech Stack','Summary','Generate']} setStep={setCurrentStep} />
+            <div className="wizard-panels">
+              <div className={"wizard-step "+(currentStep===1?'active':'')}>
+                <div className="section">
+                  <h2>Project Configuration</h2>
+                  <div className="inline-fields">
+                    <div className="field"><label htmlFor="name">Project Name</label><input id="name" value={projectName} onChange={e=>setProjectName(e.target.value)} placeholder="my-project" /></div>
+                    <div className="field"><label htmlFor="author">Author</label><input id="author" value={author} onChange={e=>setAuthor(e.target.value)} placeholder="Your Name" /></div>
+                    <div className="field"><label htmlFor="license">License</label><select id="license" value={license} onChange={e=>setLicense(e.target.value)}><option>MIT</option><option>Apache-2.0</option><option>GPL-3.0</option><option>ISC</option></select></div>
+                  </div>
+                  <div className="field" style={{marginTop:16}}><label htmlFor="desc">Description</label><textarea id="desc" value={description} onChange={e=>setDescription(e.target.value)} placeholder="Short project description" /></div>
+                </div>
+              </div>
+              <div className={"wizard-step "+(currentStep===2?'active':'')}>
+                <MultiSelectCategory category="frontend" selected={selected.frontend} onToggle={onToggle} computeIncompat={computeIncompat} />
+                <MultiSelectCategory category="backend" selected={selected.backend} onToggle={onToggle} computeIncompat={computeIncompat} />
+                <MultiSelectCategory category="database" selected={selected.database} onToggle={onToggle} />
+                <MultiSelectCategory category="tools" selected={selected.tools} onToggle={onToggle} />
+                <MultiSelectCategory category="aiFrameworks" selected={selected.aiFrameworks} onToggle={onToggle} />
+                <MultiSelectCategory category="llmProviders" selected={selected.llmProviders} onToggle={onToggle} />
+                <MultiSelectCategory category="protocols" selected={selected.protocols} onToggle={onToggle} />
+              </div>
+              <div className={"wizard-step "+(currentStep===3?'active':'')}>
+                <div className="section">
+                  <h2>Summary & Compatibility</h2>
+                  <p style={{marginTop:-4}}>Review your selections and adjust before generation.</p>
+                  <div className="grid" style={{marginTop:20}}>
+                    {Object.keys(CATEGORY_LABELS).map(cat=> cfg[cat] && cfg[cat].length>0 && (
+                      <div key={cat}>
+                        <strong>{CATEGORY_LABELS[cat]}</strong>: {cfg[cat].join(', ')}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{marginTop:20, display:'grid', gap:12}}>
+                    {conflicts.map((c,i)=><div key={i} className="error" role="alert"><strong>Conflict:</strong> {c}</div>)}
+                    {warnings.map((w,i)=><div key={i} className="warning" role="alert"><strong>Note:</strong> {w}</div>)}
+                    {(!conflicts.length && !warnings.length) && <div className="warning" style={{background:'rgba(33,128,141,0.12)', borderColor:'rgba(33,128,141,0.4)', color:'var(--color-primary)'}}><strong>Great!</strong> No compatibility flags detected.</div>}
+                  </div>
+                </div>
+                <div className="section">
+                  <h2>File Tree Preview</h2>
+                  <FileTree cfg={cfg} />
+                </div>
+              </div>
+              <div className={"wizard-step "+(currentStep===4?'active':'')}>
+                <div className="section">
+                  <h2>Generated Setup Script</h2>
+                  <ScriptPreview cfg={cfg} />
+                  <div style={{marginTop:16, display:'flex', gap:12, flexWrap:'wrap'}}>
+                    <button onClick={()=>navigator.clipboard.writeText(generateScript(cfg))}>Copy Script</button>
+                    <button className="secondary" onClick={()=>exportZip(cfg)}>Download ZIP</button>
+                  </div>
+                </div>
+                <div className="section">
+                  <h2>Next Steps</h2>
+                  <ol style={{lineHeight:1.6}}>
+                    <li>Download and run <code>setup.sh</code>.</li>
+                    <li>Fill in API keys inside <code>.env</code>.</li>
+                    <li>Activate Python venv if using AI frameworks.</li>
+                    <li>Start backend & frontend dev servers.</li>
+                    <li>Build amazing agentic application 🚀</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+            <div className="actions-bar">
+              <div className="nav-buttons">
+                <button className="secondary" disabled={currentStep===1} onClick={()=>setCurrentStep(s=>Math.max(1,s-1))}>Back</button>
+                {currentStep<4 && <button disabled={!canNext()} onClick={()=>setCurrentStep(s=>Math.min(4,s+1))}>{currentStep===3?'Generate':'Next'}</button>}
+              </div>
+              {currentStep===4 && <button onClick={()=>{setCurrentStep(1); setSelected(emptySelection);}} className="ghost">Start Over</button>}
+            </div>
+          </div>
+          {showTemplates && <TemplateModal onClose={()=>setShowTemplates(false)} applyTemplate={applyTemplate} />}
+          <div className="footer-note">GenAppXpress – Instant full-stack & AI agent scaffolding • v0.1.0</div>
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "name": "genappxpress",
+  "version": "1.0.0",
+  "description": "One-Click App Scaffolding from UI + Shell Script Generator with AI Agent Support",
+  "type": "module",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "serve-static": "npx serve .",
+    "dev-static": "npx live-server .",
+    "start": "npm run serve-static",
+    "clean": "rm -rf node_modules package-lock.json && npm install"
+  },
+  "keywords": [
+    "scaffolding",
+    "project-generator",
+    "shell-script",
+    "react",
+    "full-stack",
+    "developer-tools",
+    "vite",
+    "typescript",
+    "tailwind",
+    "ai-agents",
+    "langchain",
+    "llm",
+    "mcp"
+  ],
+  "author": "GenAppXpress Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2"
+  },
+  "dependencies": {
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
