@@ -86,6 +86,7 @@ export function generateStructure(cfg){
   const nextSelected = cfg.frontend.includes('nextjs');
   const expressSelected = cfg.backend.includes('express');
   const fastapiSelected = cfg.backend.includes('fastapi');
+  const selectedTemplates = cfg.templates || []; // array of template ids
 
   const pkg = {
     name: cfg.projectName,
@@ -148,7 +149,7 @@ export function generateStructure(cfg){
     includeChatRoute = reactSelected && cfg.llmProviders.length>0;
     const chatRouteFile = includeChatRoute ? {
       'routes': {
-        'chat.js': `import { Router } from 'express';\nimport fetch from 'node-fetch';\nconst router = Router();\n// Simple relay endpoint (expects {message})\nrouter.post('/chat', async (req,res)=>{\n  const { message } = req.body || {};\n  if(!message){ return res.status(400).json({error:'message required'}); }\n  // Example: echo or integrate with provider via Python side /agents or direct API\n  // For real OpenAI call in Node (if you add openai npm dep):\n  // const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });\n  // const completion = await client.responses.create({ model:'gpt-4o-mini', input: message });\n  // return res.json({ reply: completion.output_text });\n  res.json({ reply: 'Echo: '+message });\n});\nexport default router;\n`
+        'chat.js': `import { Router } from 'express';\n// Chat route dynamically uses provider if available.\nconst router = Router();\nconst haveOpenAI = !!process.env.OPENAI_API_KEY;\nconst haveOllama = !!process.env.OLLAMA_HOST;\nlet openaiClient = null;\n${cfg.llmProviders.includes('openai')?"try { const OpenAI = (await import('openai')).default; openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); } catch(_) {}\n":""}router.post('/chat', async (req,res)=>{\n  const { message } = req.body || {};\n  if(!message){ return res.status(400).json({error:'message required'}); }\n  try {\n    if(openaiClient && haveOpenAI){\n      const completion = await openaiClient.chat.completions.create({ model:'gpt-4o-mini', messages:[{role:'user', content: message}] });\n      return res.json({ reply: completion.choices[0].message.content });\n    }\n    if(haveOllama){\n      const host = process.env.OLLAMA_HOST || 'http://localhost:11434';\n      const r = await fetch(host+'/api/generate',{method:'POST',headers:{'Content-Type':'application/json'}, body: JSON.stringify({model:'llama3', prompt: message})});\n      const j = await r.json();\n      return res.json({ reply: (j.response||'').trim() });\n    }\n    return res.json({ reply: 'Echo: '+message });\n  } catch(err){\n    console.error(err);\n    return res.status(500).json({ error: err.message });\n  }\n});\nexport default router;\n`
       }
     } : {};
     const serverJs = `import express from 'express';\nimport cors from 'cors';\nimport helmet from 'helmet';\n${includeChatRoute?"import chatRouter from './routes/chat.js';\n":""}const app = express();\napp.use(helmet());\napp.use(cors());\napp.use(express.json());\napp.get('/api/health', (_req,res)=>res.json({ ok: true }));\n${includeChatRoute?"app.use('/api', chatRouter);\n":""}const port = process.env.PORT || 3001;\napp.listen(port, ()=>console.log('Express server running on '+port));\n`;
@@ -188,6 +189,36 @@ export function generateStructure(cfg){
     if(cfg.aiFrameworks.includes('langgraph')) frameworkDir['agent_langgraph.py'] = `"""LangGraph minimal graph."""\nfrom langgraph.graph import StateGraph, END\nclass State(dict): pass\ndef one(s:State): s['msg']='Hello'; return s\ndef two(s:State): s['msg']+=' Graph'; return s\nsg=StateGraph(State)\nsg.add_node('one',one); sg.add_node('two',two)\nsg.set_entry_point('one'); sg.add_edge('one','two'); sg.add_edge('two',END)\napp=sg.compile()\nif __name__=='__main__': print(app.invoke({}))`;
     if(cfg.aiFrameworks.includes('semantic-kernel')) frameworkDir['agent_sk.py'] = `"""Semantic Kernel sample."""\nimport asyncio, os\nimport semantic_kernel as sk\nfrom semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion\nasync def main():\n  kernel=sk.Kernel()\n  if os.getenv('OPENAI_API_KEY'):\n    kernel.add_service(OpenAIChatCompletion(service_id='openai', api_key=os.getenv('OPENAI_API_KEY'), model_id='gpt-4o-mini'))\n    svc=kernel.get_service('openai'); print(await svc.complete('Write a 4 word motto.'))\n  else: print('No OPENAI_API_KEY set.')\nif __name__=='__main__': asyncio.run(main())`;
     if(cfg.aiFrameworks.includes('autogen')) frameworkDir['agent_autogen.py'] = `"""AutoGen simple chat."""\nfrom autogen import AssistantAgent, UserProxyAgent\nassistant=AssistantAgent('assistant'); user=UserProxyAgent('user', code_execution_config=False)\nif __name__=='__main__': user.initiate_chat(assistant, message='Say hi succinctly.')`;
+  }
+
+  // --- TEMPLATE-SPECIFIC ENHANCEMENTS ---
+  function enhanceForTemplates(projectRoot){
+    if(!selectedTemplates.length) return;
+    // AI Chatbot: ensure chat instructions & README addition
+    if(selectedTemplates.includes('ai-chatbot')){
+      // Add frontend helper util
+      if(reactSelected){
+        projectRoot.src = projectRoot.src || {};
+        projectRoot.src['chatApi.js'] = `export async function sendChat(message){ const r= await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message})}); return r.json(); }`;
+      }
+      // Append README guidance
+      projectRoot['README.md'] += `\n## AI Chatbot\nStart backend (Express) then frontend. Use the chat box to converse with the selected model.${cfg.llmProviders.includes('openai')?' Requires OPENAI_API_KEY in .env.':''}\n`;
+    }
+    if(selectedTemplates.includes('rag-service') && fastapiSelected){
+      // Replace / extend rag.py with simple embedding & similarity (if exists)
+      const api = projectRoot.api || {};
+      api['embeddings.py'] = `"""Simple in-memory embedding store (character code mean vector)."""\nfrom __future__ import annotations\nfrom math import sqrt\nfrom typing import List, Tuple\nSTORE: List[Tuple[str, float]] = []\ndef embed(text: str) -> float:\n    if not text: return 0.0\n    return sum(ord(c) for c in text) / len(text)\ndef add(doc: str): STORE.append((doc, embed(doc)))\ndef similarity(a: float, b: float) -> float:\n    # Since scalar, negative distance transform\n    return 1.0 - abs(a-b) / (max(a,b)+1e-6) if (a or b) else 0.0\ndef topk(query: str, k=3):\n    qv = embed(query)\n    scored = sorted(((doc, similarity(qv, dv)) for doc,dv in STORE), key=lambda x: x[1], reverse=True)\n    return [d for d,_ in scored[:k]]\nif __name__=='__main__':\n    docs=['LangChain enables composition.','FastAPI is fast.','RAG augments generation.']\n    for d in docs: add(d)\n    print(topk('fast api speed'))`;
+      api['ingest.py'] = `"""Bulk ingest sample documents into embedding store."""\nfrom .embeddings import add\nSAMPLE=['GenAppXpress scaffolds projects.','Retrieval augments context','OpenAI provides powerful models']\nfor s in SAMPLE: add(s)\nprint('Ingested', len(SAMPLE), 'documents')`;
+      if(api['rag.py']){
+        api['rag.py'] = api['rag.py'] + "\n# NOTE: For more advanced vector search integrate FAISS or Chroma.\n";
+      }
+      projectRoot.api = api;
+      projectRoot['README.md'] += `\n## RAG Service\nRun:\n1. source .venv/bin/activate\n2. python api/ingest.py\n3. uvicorn api.main:app --reload\nPOST /rag {\"question\": \"Your query\"}\n`;
+    }
+    if(selectedTemplates.includes('local-first') && expressSelected){
+      // Provide a README note for Ollama usage
+      projectRoot['README.md'] += `\n## Local-first\nStarts with Ollama. Ensure 'ollama run llama3' has been executed and OLLAMA_HOST is set if remote.\n`;
+    }
   }
 
   // Protocols (MCP minimal client stub)
@@ -230,6 +261,8 @@ export function generateStructure(cfg){
       ...(providersDir||frameworkDir ? { 'agents': { ...(frameworkDir||{}), 'providers': providersDir || {}, ...(protocolDir||{}) } } : {}),
     }
   };
+  // Apply template enhancements mutating base[cfg.projectName]
+  enhanceForTemplates(base[cfg.projectName]);
   return base;
 }
 
@@ -250,6 +283,8 @@ export function generateScript(cfg){
   if(cfg.protocols.includes('mcp')) nodeDeps.add('mcp-sdk');
   if(cfg.tools.includes('eslint')) nodeDeps.add('eslint');
   if(cfg.tools.includes('typescript')) ['typescript','@types/node'].forEach(d=>nodeDeps.add(d));
+  if(cfg.templates && cfg.templates.includes('ai-chatbot') && cfg.llmProviders.includes('openai')) nodeDeps.add('openai');
+  if(cfg.templates && cfg.templates.includes('local-first') && cfg.llmProviders.includes('ollama')) { /* no extra node dep */ }
 
   cfg.aiFrameworks.forEach(id=>{const f=TECH_STACK.aiFrameworks.find(t=>t.id===id); if(f) f.commands.forEach(c=>{ if(c.startsWith('pip ')) c.replace('pip install','').trim().split(/\s+/).forEach(p=>pyDeps.add(p)); });});
   cfg.llmProviders.forEach(id=>{const p=TECH_STACK.llmProviders.find(t=>t.id===id); if(p) p.commands.forEach(c=>{ if(c.startsWith('pip ')) c.replace('pip install','').trim().split(/\s+/).forEach(q=>pyDeps.add(q)); });});
