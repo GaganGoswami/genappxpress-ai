@@ -45,11 +45,9 @@ html,body {height:100%;}
 body {margin:0; font-family:var(--font-family-base); background:var(--color-background); color:var(--color-text); -webkit-font-smoothing:antialiased;}
 /* ...existing code from index.html style block... */
 
-/* Summary two-column layout and file preview additions */
-.summary-columns { display:flex; gap:24px; align-items:stretch; }
-.summary-left { flex:1 1 45%; min-width:260px; }
-.summary-right { flex:1 1 55%; min-width:320px; display:flex; flex-direction:column; }
-@media (max-width: 1100px){ .summary-columns { flex-direction:column; } }
+/* Summary step (single column now). Remove old two-column classes but keep backward compatibility */
+.summary-columns { display:block; }
+.summary-left, .summary-right { width:100%; min-width:0; }
 
 .file-preview-layout { display:flex; gap:16px; min-height:340px; }
 .file-tree-pane { flex:0 0 45%; max-width:380px; }

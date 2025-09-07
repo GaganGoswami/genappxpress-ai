@@ -228,34 +228,32 @@ export default function App() {
             <MultiSelectCategory category="protocols" selected={selected.protocols} onToggle={onToggle} />
           </div>
           <div className={"wizard-step "+(currentStep===3?'active':'')} role="tabpanel" aria-label="Summary & Compatibility Step">
-            <div className="summary-columns">
-              <div className="summary-left section">
-                <h2>Summary & Compatibility</h2>
-                <p style={{marginTop:-4}}>Review your selections and adjust before generation.</p>
-                <div className="grid" style={{marginTop:20}}>
-                  {Object.keys(CATEGORY_LABELS).map(cat=> cfg[cat] && cfg[cat].length>0 && (
-                    <div key={cat}>
-                      <strong>{CATEGORY_LABELS[cat]}</strong>: {cfg[cat].join(', ')}
-                    </div>
-                  ))}
-                </div>
-                <div style={{marginTop:20, display:'grid', gap:12}}>
-                  {conflicts.map((c,i)=><div key={i} className="error" role="alert"><strong>Conflict:</strong> {c}</div>)}
-                  {warnings.map((w,i)=><div key={i} className="warning" role="alert"><strong>Note:</strong> {w}</div>)}
-                  {(!conflicts.length && !warnings.length) && <div className="warning" style={{background:'rgba(33,128,141,0.12)', borderColor:'rgba(33,128,141,0.4)', color:'var(--color-primary)'}}><strong>Great!</strong> No compatibility flags detected.</div>}
-                </div>
+            <div className="section">
+              <h2>Summary & Compatibility</h2>
+              <p style={{marginTop:-4}}>Review your selections and adjust before generation.</p>
+              <div className="grid" style={{marginTop:20}}>
+                {Object.keys(CATEGORY_LABELS).map(cat=> cfg[cat] && cfg[cat].length>0 && (
+                  <div key={cat}>
+                    <strong>{CATEGORY_LABELS[cat]}</strong>: {cfg[cat].join(', ')}
+                  </div>
+                ))}
               </div>
-              <div className="summary-right section" aria-label="File Tree and Preview" role="region">
-                <h2 style={{marginTop:0}}>File Tree & Preview</h2>
-                <div className="file-preview-layout">
-                  <div className="file-tree-pane" aria-label="File tree" role="tree">
-                    <FileTree cfg={cfg} activeFile={previewFile} onSelect={handleSelectFile} editedOverrides={editedOverrides} />
-                  </div>
-                  <div className="file-preview-pane" aria-label="File preview" role="group">
-                    {previewFile ? (
-                      <EditorDiff path={previewFile} original={originalContent} value={previewContent} onChange={handleEditCurrent} />
-                    ) : <div className="preview-placeholder">Select a file to preview its contents.</div>}
-                  </div>
+              <div style={{marginTop:20, display:'grid', gap:12}}>
+                {conflicts.map((c,i)=><div key={i} className="error" role="alert"><strong>Conflict:</strong> {c}</div>)}
+                {warnings.map((w,i)=><div key={i} className="warning" role="alert"><strong>Note:</strong> {w}</div>)}
+                {(!conflicts.length && !warnings.length) && <div className="warning" style={{background:'rgba(33,128,141,0.12)', borderColor:'rgba(33,128,141,0.4)', color:'var(--color-primary)'}}><strong>Great!</strong> No compatibility flags detected.</div>}
+              </div>
+            </div>
+            <div className="section" aria-label="File Tree and Preview" role="region" style={{marginTop:32}}>
+              <h2 style={{marginTop:0}}>File Tree & Preview</h2>
+              <div className="file-preview-layout">
+                <div className="file-tree-pane" aria-label="File tree" role="tree">
+                  <FileTree cfg={cfg} activeFile={previewFile} onSelect={handleSelectFile} editedOverrides={editedOverrides} />
+                </div>
+                <div className="file-preview-pane" aria-label="File preview" role="group">
+                  {previewFile ? (
+                    <EditorDiff path={previewFile} original={originalContent} value={previewContent} onChange={handleEditCurrent} />
+                  ) : <div className="preview-placeholder">Select a file to preview its contents.</div>}
                 </div>
               </div>
             </div>

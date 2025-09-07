@@ -77,7 +77,9 @@ export function generateEnv(selected){
 }
 
 export function generateReadme(cfg){
-  return `# ${cfg.projectName}\n\nGenerated with **GenAppXpress**.\n\n## Selected Stack\n${Object.keys(CATEGORY_LABELS).map(cat=>{const arr=cfg[cat]; if(!arr||!arr.length) return ''; return `- **${CATEGORY_LABELS[cat]}:** ${arr.join(', ')}`;}).filter(Boolean).join('\n')}\n\n## Getting Started\nRun the generated setup script or follow manual steps.\n\n## AI Notes\nIf using AI providers set the API keys in .env before running agent scripts.\n`;}
+  const stackLines = Object.keys(CATEGORY_LABELS).map(cat=>{const arr=cfg[cat]; if(!arr||!arr.length) return ''; return `- **${CATEGORY_LABELS[cat]}:** ${arr.join(', ')}`;}).filter(Boolean).join('\n');
+  const templateLine = cfg.templates && cfg.templates.length ? `\n## Templates\n- ${cfg.templates.join(', ')}` : '';
+  return `# ${cfg.projectName}\n\nGenerated with **GenAppXpress**.${templateLine}\n\n## Selected Stack\n${stackLines}\n\n## Getting Started\nRun the generated setup script or follow manual steps.\n\n## AI Notes\nIf using AI providers set the API keys in .env before running agent scripts.\n`;}
 
 export function generateStructure(cfg){
   const useTS = cfg.tools.includes('typescript');
@@ -109,6 +111,8 @@ export function generateStructure(cfg){
   if(vueSelected){ addDep('vue'); addDep('vite'); }
   if(nextSelected){ addDep('next'); addDep('react'); addDep('react-dom'); }
   if(expressSelected){ addDep('express'); addDep('cors'); addDep('helmet'); }
+  // If OpenAI provider selected and potential chat usage, include openai dependency
+  if(cfg.llmProviders.includes('openai') && expressSelected && reactSelected){ addDep('openai'); }
   if(cfg.database.includes('postgresql')) addDep('pg');
   if(cfg.database.includes('mongodb')) addDep('mongoose');
   if(cfg.database.includes('redis')) addDep('ioredis');
@@ -219,31 +223,50 @@ export function generateStructure(cfg){
       // Provide a README note for Ollama usage
       projectRoot['README.md'] += `\n## Local-first\nStarts with Ollama. Ensure 'ollama run llama3' has been executed and OLLAMA_HOST is set if remote.\n`;
     }
+    if(selectedTemplates.includes('web-research')){
+      // CrewAI web research scaffold (Python)
+      projectRoot.agents = projectRoot.agents || {};
+      projectRoot.agents['web_research.py'] = `"""Simple web research crew using CrewAI (placeholder scraping)."""\nimport requests, re\nfrom crewai import Agent, Task, Crew\nURLS=['https://example.com','https://www.iana.org/domains/reserved']\nEXTRACT_RE=re.compile(r'<title>(.*?)</title>', re.I|re.S)\ndef fetch_title(u:str):\n    try:\n        html=requests.get(u,timeout=10).text\n        m=EXTRACT_RE.search(html)\n        return (u, m.group(1).strip() if m else 'No Title')\n    except Exception as e:\n        return (u, f'Error: {e}')\nresearcher=Agent(role='Researcher', goal='Collect page titles', backstory='Find concise titles', allow_delegation=False)\nsummary_agent=Agent(role='Summarizer', goal='Summarize findings', backstory='Combine results', allow_delegation=False)\nresults=[]\nresearch_task=Task(description='Fetch titles from a preset URL list', agent=researcher, expected_output='List of (url,title) pairs', tools=[], async_execution=False)\nsummary_task=Task(description='Summarize the titles list into one sentence', agent=summary_agent, context=[research_task])\nif __name__=='__main__':\n    for u in URLS: results.append(fetch_title(u))\n    print('Collected:', results)\n    print('Summary: Titles collected for', len(results), 'pages.')`;
+      projectRoot['README.md'] += `\n## Web Research\nRun: source .venv/bin/activate && python agents/web_research.py\nOutputs collected titles (placeholder). Extend with real scraping & tool sets.\n`;
+    }
+    if(selectedTemplates.includes('process-automator')){
+      projectRoot.agents = projectRoot.agents || {};
+      projectRoot.agents['process_automator.py'] = `"""CrewAI process automation skeleton."""\nfrom crewai import Agent, Task, Crew\nplanner=Agent(role='Planner', goal='Break a workflow request into steps', backstory='Understands processes')\nexecutor=Agent(role='Executor', goal='Execute a single described step', backstory='Carries out instructions precisely')\nreviewer=Agent(role='Reviewer', goal='Validate outputs', backstory='Checks quality')\nplan_task=Task(description='Create 3 high level steps to onboard a new engineer', agent=planner)\nexec_tasks=[Task(description='Execute step {i}', agent=executor, context=[plan_task]) for i in range(1,4)]\nreview_task=Task(description='Review execution outputs', agent=reviewer, context=exec_tasks)\nif __name__=='__main__':\n    crew=Crew(agents=[planner,executor,reviewer], tasks=[plan_task,*exec_tasks,review_task])\n    print('Automation run starting...')\n    crew.kickoff()`;
+      projectRoot['README.md'] += `\n## Process Automator\nRun: source .venv/bin/activate && python agents/process_automator.py\nDemonstrates planner -> executor -> reviewer pattern.\n`;
+    }
+    if(selectedTemplates.includes('code-assistant-mcp') && cfg.protocols.includes('mcp')){
+      // Enhance MCP client with file browsing + simple tool invocation
+      const agentsRoot = projectRoot.agents || {};
+      agentsRoot.mcp = agentsRoot.mcp || {};
+      agentsRoot.mcp['client.js'] = `#!/usr/bin/env node\n// Simplified MCP client placeholder demonstrating planned structure.\nimport fs from 'fs';\nimport path from 'path';\nfunction listFiles(dir){ return fs.readdirSync(dir).slice(0,50); }\nfunction readFileSafe(p){ try { return fs.readFileSync(p,'utf8').slice(0,2000); } catch(e){ return 'ERR:'+e.message; } }\nif (import.meta.url === 'file://'+process.argv[1]){\n  const dir=process.argv[2]||'.';\n  console.log('Files:', listFiles(dir));\n  const first = listFiles(dir)[0];\n  if(first){ console.log('Preview of', first, ':'); console.log(readFileSafe(path.join(dir, first))); }\n}`;
+      agentsRoot.mcp['tools'] = { 'fsTool.js': `export function list(dir='.'){ return { files: [] }; } // Placeholder real MCP tool would expose spec.` };
+      projectRoot.agents = agentsRoot;
+      projectRoot['README.md'] += `\n## Code Assistant (MCP)\nMCP stub: run node agents/mcp/client.js to list project files (placeholder). Integrate real MCP SDK for tool calling.\n`;
+    }
+    if(selectedTemplates.includes('multimodal-assistant') && fastapiSelected && cfg.llmProviders.includes('gemini')){
+      if(projectRoot.api && projectRoot.api['main.py']){
+        projectRoot.api['main.py'] += `\n# Multimodal endpoint (Gemini)\ntry:\n    import google.generativeai as genai\n    if os.getenv('GEMINI_API_KEY'):\n        genai.configure(api_key=os.getenv('GEMINI_API_KEY'))\n        from fastapi import Body\n        @app.post('/vision')\n        async def vision(payload: dict = Body(...)):\n            prompt = payload.get('prompt','Describe image')\n            image_url = payload.get('image_url')\n            model = genai.GenerativeModel('gemini-1.5-flash')\n            parts=[prompt]\n            if image_url: parts.append({'image_url': image_url})\n            resp = model.generate_content(parts)\n            return {'text': resp.text}\nexcept Exception as e:\n    print('Gemini vision route skipped:', e)\n`;
+        projectRoot['README.md'] += `\n## Multimodal Assistant\nEndpoint POST /vision {"prompt":"...","image_url":"..."} returns model text output (simplified).\n`;
+      }
+    }
   }
-
-  // Protocols (MCP minimal client stub)
-  const protocolDir = cfg.protocols.includes('mcp') ? { 'mcp': { 'client.js': `// Minimal MCP client stub (implementation dependent)` } } : undefined;
-
-  // ESLint
-  const eslintFile = cfg.tools.includes('eslint') ? { '.eslintrc.cjs': `module.exports = { env:{browser:true,es2021:true,node:true}, extends:['eslint:recommended'${reactSelected?',"plugin:react/recommended"':''}], parserOptions:{ ecmaVersion:12, sourceType:'module' }, rules:{} };` } : {};
-
-  // TypeScript config
+  // --- CONFIG / SUPPORT FILES (must be defined before base spreads) ---
+  const eslintFile = cfg.tools.includes('eslint') ? { '.eslintrc.cjs': `module.exports = { env:{browser:true,es2021:true,node:true}, extends:['eslint:recommended'${reactSelected?",'plugin:react/recommended'":''}], parserOptions:{ ecmaVersion:12, sourceType:'module' }, rules:{} };` } : {};
   const tsConfig = useTS ? { 'tsconfig.json': JSON.stringify({ compilerOptions:{target:'ES2020',module:'ESNext',jsx:'react-jsx',moduleResolution:'Node',esModuleInterop:true,strict:true,skipLibCheck:true}, include:['src'] }, null, 2) } : {};
-
-  // Docker
   const dockerFiles = cfg.tools.includes('docker') ? {
     'Dockerfile': `# Simple multi-stage build for Node + optional frontend\nFROM node:20-alpine AS base\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nCMD [\"npm\",\"run\",\"dev\"]`,
-    'docker-compose.yml': `version: '3.9'\nservices:\n  app:\n    build: .\n    ports:\n      - '5173:5173'\n      - '3001:3001'\n    environment:\n      - NODE_ENV=development\n${cfg.database.includes('postgresql')?"  db:\n    image: postgres:16\n    environment:\n      - POSTGRES_PASSWORD=postgres\n    ports:\n      - '5432:5432'\n":""}`
+    'docker-compose.yml': `version: '3.9'\nservices:\n  app:\n    build: .\n    ports:\n      - '5173:5173'\n      - '3001:3001'\n    environment:\n      - NODE_ENV=development\n${cfg.database.includes('postgresql')?"  db:\n    image: postgres:16\n    environment:\n      - POSTGRES_PASSWORD=postgres\n    ports:\n      - '5432:5432'\n":''}`
   } : {};
-
-  // Python requirements aggregation
+  // Python requirements aggregation (before base so we can spread requirementsFile)
   const pyPackages = new Set();
   if(fastapiSelected){ pyPackages.add('fastapi'); pyPackages.add('uvicorn'); }
   cfg.llmProviders.forEach(id=>{ if(id==='openai') pyPackages.add('openai'); if(id==='anthropic') pyPackages.add('anthropic'); if(id==='gemini') pyPackages.add('google-generativeai'); if(id==='xai') pyPackages.add('groq'); if(id==='ollama') pyPackages.add('requests'); });
   cfg.aiFrameworks.forEach(id=>{ if(id==='langchain') pyPackages.add('langchain'); if(id==='crewai') pyPackages.add('crewai'); if(id==='langgraph') pyPackages.add('langgraph'); if(id==='semantic-kernel') pyPackages.add('semantic-kernel'); if(id==='autogen') pyPackages.add('pyautogen'); });
   if(wantRag){ pyPackages.add('chromadb'); pyPackages.add('pydantic'); }
+  if(selectedTemplates.includes('web-research')) { pyPackages.add('beautifulsoup4'); pyPackages.add('requests'); }
   const requirementsFile = pyPackages.size ? { 'requirements.txt': Array.from(pyPackages).sort().join('\n')+'\n' } : {};
 
+  // Build base structure first (after we have config/support files)
   const base = {
     [cfg.projectName]: {
       'README.md': generateReadme(cfg),
@@ -258,11 +281,30 @@ export function generateStructure(cfg){
       ...(serverDir? { 'server': serverDir }: {}),
       ...(apiDir? { 'api': apiDir }: {}),
       ...(dbDir? { 'database': dbDir }: {}),
-      ...(providersDir||frameworkDir ? { 'agents': { ...(frameworkDir||{}), 'providers': providersDir || {}, ...(protocolDir||{}) } } : {}),
+      ...(providersDir||frameworkDir ? { 'agents': { ...(frameworkDir||{}), 'providers': providersDir || {} } } : {}),
     }
   };
   // Apply template enhancements mutating base[cfg.projectName]
   enhanceForTemplates(base[cfg.projectName]);
+  // Add aggregator script & dev:full script if applicable
+  if(base[cfg.projectName].agents){
+    const agentScriptNames = [];
+    if(frameworkDir){
+      if(cfg.aiFrameworks.includes('langchain')) agentScriptNames.push(['LangChain','agent_langchain.py']);
+      if(cfg.aiFrameworks.includes('crewai')) agentScriptNames.push(['CrewAI','agent_crewai.py']);
+      if(cfg.aiFrameworks.includes('langgraph')) agentScriptNames.push(['LangGraph','agent_langgraph.py']);
+      if(cfg.aiFrameworks.includes('semantic-kernel')) agentScriptNames.push(['Semantic Kernel','agent_sk.py']);
+      if(cfg.aiFrameworks.includes('autogen')) agentScriptNames.push(['AutoGen','agent_autogen.py']);
+    }
+    const runAll = `"""Run all available agent example scripts sequentially."""\nimport subprocess, sys, os\nROOT = os.path.dirname(__file__)\nSCRIPTS = ${JSON.stringify(agentScriptNames)}\nif __name__=='__main__':\n    if not SCRIPTS: print('No agent scripts selected.')\n    for name, script in SCRIPTS:\n        path = os.path.join(ROOT, script)\n        if os.path.exists(path):\n            print(f'\n=== {name} ({script}) ===')\n            subprocess.run([sys.executable, path], check=False)\n        else:\n            print('Missing', script)\n`;
+    base[cfg.projectName].agents['run_all_agents.py'] = runAll;
+    if(pkg.scripts && pkg.scripts.server && pkg.scripts.dev){
+      addDevDep('concurrently');
+      pkg.scripts['dev:full'] = 'concurrently "npm run server" "npm run dev"';
+      base[cfg.projectName]['package.json'] = JSON.stringify(pkg, null, 2);
+      base[cfg.projectName]['README.md'] += '\n### Full-stack Dev\nUse `npm run dev:full` to start both server and frontend (requires concurrently).\n';
+    }
+  }
   return base;
 }
 
@@ -283,7 +325,8 @@ export function generateScript(cfg){
   if(cfg.protocols.includes('mcp')) nodeDeps.add('mcp-sdk');
   if(cfg.tools.includes('eslint')) nodeDeps.add('eslint');
   if(cfg.tools.includes('typescript')) ['typescript','@types/node'].forEach(d=>nodeDeps.add(d));
-  if(cfg.templates && cfg.templates.includes('ai-chatbot') && cfg.llmProviders.includes('openai')) nodeDeps.add('openai');
+  // Add openai dep if openai provider selected and express/react chat route likely used
+  if(cfg.llmProviders.includes('openai') && cfg.backend.includes('express') && cfg.frontend.includes('react')) nodeDeps.add('openai');
   if(cfg.templates && cfg.templates.includes('local-first') && cfg.llmProviders.includes('ollama')) { /* no extra node dep */ }
 
   cfg.aiFrameworks.forEach(id=>{const f=TECH_STACK.aiFrameworks.find(t=>t.id===id); if(f) f.commands.forEach(c=>{ if(c.startsWith('pip ')) c.replace('pip install','').trim().split(/\s+/).forEach(p=>pyDeps.add(p)); });});
