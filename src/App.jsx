@@ -1,6 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import StepIndicators from './components/StepIndicators';
+import MultiSelectCategory from './components/MultiSelectCategory';
+import TemplateModal from './components/TemplateModal';
+import FileTree from './components/FileTree';
+import ScriptPreview from './components/ScriptPreview';
+import { TECH_STACK, CATEGORY_LABELS, checkCompatibility, generateScript } from './data/techData';
 
 const emptySelection = {frontend:[], backend:[], database:[], tools:[], aiFrameworks:[], llmProviders:[], protocols:[]};
 
@@ -19,6 +25,8 @@ export default function App() {
   const [license, setLicense] = useState('MIT');
   const [showTemplates, setShowTemplates] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
+  const [previewContent, setPreviewContent] = useState('');
   /**
    * Export setup script and config as ZIP file
    * @param {Object} cfg - Project config
@@ -160,25 +168,39 @@ export default function App() {
             <MultiSelectCategory category="protocols" selected={selected.protocols} onToggle={onToggle} />
           </div>
           <div className={"wizard-step "+(currentStep===3?'active':'')} role="tabpanel" aria-label="Summary & Compatibility Step">
-            <div className="section">
-              <h2>Summary & Compatibility</h2>
-              <p style={{marginTop:-4}}>Review your selections and adjust before generation.</p>
-              <div className="grid" style={{marginTop:20}}>
-                {Object.keys(CATEGORY_LABELS).map(cat=> cfg[cat] && cfg[cat].length>0 && (
-                  <div key={cat}>
-                    <strong>{CATEGORY_LABELS[cat]}</strong>: {cfg[cat].join(', ')}
+            <div className="summary-columns">
+              <div className="summary-left section">
+                <h2>Summary & Compatibility</h2>
+                <p style={{marginTop:-4}}>Review your selections and adjust before generation.</p>
+                <div className="grid" style={{marginTop:20}}>
+                  {Object.keys(CATEGORY_LABELS).map(cat=> cfg[cat] && cfg[cat].length>0 && (
+                    <div key={cat}>
+                      <strong>{CATEGORY_LABELS[cat]}</strong>: {cfg[cat].join(', ')}
+                    </div>
+                  ))}
+                </div>
+                <div style={{marginTop:20, display:'grid', gap:12}}>
+                  {conflicts.map((c,i)=><div key={i} className="error" role="alert"><strong>Conflict:</strong> {c}</div>)}
+                  {warnings.map((w,i)=><div key={i} className="warning" role="alert"><strong>Note:</strong> {w}</div>)}
+                  {(!conflicts.length && !warnings.length) && <div className="warning" style={{background:'rgba(33,128,141,0.12)', borderColor:'rgba(33,128,141,0.4)', color:'var(--color-primary)'}}><strong>Great!</strong> No compatibility flags detected.</div>}
+                </div>
+              </div>
+              <div className="summary-right section" aria-label="File Tree and Preview" role="region">
+                <h2 style={{marginTop:0}}>File Tree & Preview</h2>
+                <div className="file-preview-layout">
+                  <div className="file-tree-pane" aria-label="File tree" role="tree">
+                    <FileTree cfg={cfg} activeFile={previewFile} onSelect={(path, content)=>{setPreviewFile(path); setPreviewContent(content);}} />
                   </div>
-                ))}
+                  <div className="file-preview-pane" aria-label="File preview" role="group">
+                    {previewFile ? (
+                      <>
+                        <div className="preview-header">{previewFile}</div>
+                        <pre className="preview-content" aria-label={`Contents of ${previewFile}`}>{previewContent || '/* empty file */'}</pre>
+                      </>
+                    ) : <div className="preview-placeholder">Select a file to preview its contents.</div>}
+                  </div>
+                </div>
               </div>
-              <div style={{marginTop:20, display:'grid', gap:12}}>
-                {conflicts.map((c,i)=><div key={i} className="error" role="alert"><strong>Conflict:</strong> {c}</div>)}
-                {warnings.map((w,i)=><div key={i} className="warning" role="alert"><strong>Note:</strong> {w}</div>)}
-                {(!conflicts.length && !warnings.length) && <div className="warning" style={{background:'rgba(33,128,141,0.12)', borderColor:'rgba(33,128,141,0.4)', color:'var(--color-primary)'}}><strong>Great!</strong> No compatibility flags detected.</div>}
-              </div>
-            </div>
-            <div className="section">
-              <h2>File Tree Preview</h2>
-              <FileTree cfg={cfg} />
             </div>
           </div>
           <div className={"wizard-step "+(currentStep===4?'active':'')} role="tabpanel" aria-label="Generated Script Step">

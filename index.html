@@ -101,6 +101,25 @@
     .code-block {font-family:var(--font-family-mono); font-size:12.5px; background:#111b1c; color:#d6f2f4; padding:14px 16px; border-radius:var(--radius-lg); overflow:auto; line-height:1.4; border:1px solid #083940; max-height:420px;}
     .file-tree {font-family:var(--font-family-mono); font-size:12.5px; line-height:1.5; background:var(--color-elevated); border:1px solid var(--color-border); border-radius:var(--radius-lg); padding:12px 14px; max-height:420px; overflow:auto;}
     .tree-dir {color:var(--color-primary); font-weight:600;}
+  /* Two-column summary + live preview */
+  .summary-columns {display:flex; gap:24px; align-items:stretch;}
+  .summary-left {flex:1 1 45%; min-width:260px;}
+  .summary-right {flex:1 1 55%; min-width:320px; display:flex; flex-direction:column;}
+  @media (max-width:1100px){ .summary-columns {flex-direction:column;} }
+  .file-preview-layout {display:flex; gap:16px; min-height:340px;}
+  .file-tree-pane {flex:0 0 45%; max-width:380px;}
+  .file-preview-pane {flex:1; display:flex; flex-direction:column; background:var(--color-elevated); border:1px solid var(--color-border); border-radius:8px; overflow:hidden;}
+  .preview-header {font-family:var(--font-family-mono); font-size:12px; padding:8px 12px; background:rgba(0,0,0,0.05); border-bottom:1px solid var(--color-border); color:var(--color-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  [data-color-scheme="dark"] .preview-header {background:rgba(255,255,255,0.08);}
+  .preview-content {margin:0; padding:12px 14px; font-size:12px; line-height:1.4; overflow:auto; flex:1; font-family:var(--font-family-mono);}
+  .preview-placeholder {padding:32px; text-align:center; opacity:0.7; font-size:14px;}
+  /* Interactive tree entries */
+  .tree-entry {all:unset; display:block; width:100%; text-align:left; cursor:pointer; font-family:var(--font-family-mono); font-size:12px; padding:3px 6px; border-radius:4px; border:1px solid transparent; color:var(--color-text-secondary);} 
+  .tree-entry:hover:not(.dir):not(:disabled){background:rgba(0,0,0,0.06); color:var(--color-text);} 
+  [data-color-scheme="dark"] .tree-entry:hover:not(.dir):not(:disabled){background:rgba(255,255,255,0.1);} 
+  .tree-entry.active {background:var(--color-primary); color:#fff;} 
+  .tree-entry.dir {cursor:default; font-weight:600; color:var(--color-primary);} 
+  .tree-entry:disabled {opacity:.55;}
     .footer-note {margin-top:60px; font-size:11px; opacity:.65; text-align:center;}
     .template-modal {position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:flex-start; justify-content:center; padding:60px 20px; z-index:60;} 
     .template-dialog {max-width:880px; width:100%; background:var(--color-surface); border:1px solid var(--color-border); border-radius:18px; padding:28px 34px 44px; box-shadow:var(--shadow-lg); position:relative; display:grid; gap:20px;} 
@@ -328,10 +347,20 @@
       );
     };
 
-    const FileTree = ({cfg}) => {
+    const FileTree = ({cfg, activeFile, onSelect}) => {
       const structure = useMemo(()=>generateStructure(cfg),[cfg]);
       const files = flattenStructure(structure);
-      return <div className="file-tree" aria-label="File tree preview">{files.map(f=> <div key={f}><span className={f.endsWith('/')? 'tree-dir':''}>{f}</span></div>)}</div>;
+      const getContent = (path) => {
+        const parts = path.split('/').filter(Boolean);
+        let node = structure;
+        for (let i=0;i<parts.length;i++) { const part = parts[i]; if(!node) return ''; node = node[part]; }
+        return typeof node === 'string' ? node : '';
+      };
+      return <div className="file-tree" aria-label="File tree preview">{files.map(f=> {
+        const isDir = f.endsWith('/');
+        const isActive = f === activeFile;
+        return <div key={f}> <button type="button" className={"tree-entry "+(isDir? 'dir ':'')+(isActive?'active':'')} disabled={isDir} onClick={()=>!isDir && onSelect && onSelect(f, getContent(f))} aria-label={(isDir?'Directory ':'File ')+f}>{f}</button> </div>;
+      })}</div>;
     };
 
     const ScriptPreview = ({cfg}) => {
@@ -363,8 +392,10 @@
       const [license,setLicense]=useState('MIT');
       const [showTemplates,setShowTemplates]=useState(false);
       const [darkMode,setDarkMode]=useState(document.documentElement.getAttribute('data-color-scheme')==='dark');
-      const emptySelection = {frontend:[], backend:[], database:[], tools:[], aiFrameworks:[], llmProviders:[], protocols:[]};
-      const [selected,setSelected]=useState(emptySelection);
+  const emptySelection = {frontend:[], backend:[], database:[], tools:[], aiFrameworks:[], llmProviders:[], protocols:[]};
+  const [selected,setSelected]=useState(emptySelection);
+  const [previewFile,setPreviewFile] = useState(null);
+  const [previewContent,setPreviewContent] = useState('');
 
       const onToggle=(category,id)=>{setSelected(prev=>{const list=prev[category]; const exists=list.includes(id); return {...prev,[category]: exists? list.filter(x=>x!==id): [...list,id]};});};
       const applyTemplate = (preset)=>{ setSelected(prev=> ({...prev, ...Object.fromEntries(Object.keys(emptySelection).map(k=>[k, preset[k] || prev[k]]))})); setShowTemplates(false); };
@@ -428,25 +459,39 @@
                 <MultiSelectCategory category="protocols" selected={selected.protocols} onToggle={onToggle} />
               </div>
               <div className={"wizard-step "+(currentStep===3?'active':'')}>
-                <div className="section">
-                  <h2>Summary & Compatibility</h2>
-                  <p style={{marginTop:-4}}>Review your selections and adjust before generation.</p>
-                  <div className="grid" style={{marginTop:20}}>
-                    {Object.keys(CATEGORY_LABELS).map(cat=> cfg[cat] && cfg[cat].length>0 && (
-                      <div key={cat}>
-                        <strong>{CATEGORY_LABELS[cat]}</strong>: {cfg[cat].join(', ')}
+                <div className="summary-columns">
+                  <div className="summary-left section">
+                    <h2>Summary & Compatibility</h2>
+                    <p style={{marginTop:-4}}>Review your selections and adjust before generation.</p>
+                    <div className="grid" style={{marginTop:20}}>
+                      {Object.keys(CATEGORY_LABELS).map(cat=> cfg[cat] && cfg[cat].length>0 && (
+                        <div key={cat}>
+                          <strong>{CATEGORY_LABELS[cat]}</strong>: {cfg[cat].join(', ')}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{marginTop:20, display:'grid', gap:12}}>
+                      {conflicts.map((c,i)=><div key={i} className="error" role="alert"><strong>Conflict:</strong> {c}</div>)}
+                      {warnings.map((w,i)=><div key={i} className="warning" role="alert"><strong>Note:</strong> {w}</div>)}
+                      {(!conflicts.length && !warnings.length) && <div className="warning" style={{background:'rgba(33,128,141,0.12)', borderColor:'rgba(33,128,141,0.4)', color:'var(--color-primary)'}}><strong>Great!</strong> No compatibility flags detected.</div>}
+                    </div>
+                  </div>
+                  <div className="summary-right section" aria-label="File Tree and Preview" role="region">
+                    <h2 style={{marginTop:0}}>File Tree & Preview</h2>
+                    <div className="file-preview-layout">
+                      <div className="file-tree-pane" aria-label="File tree" role="tree">
+                        <FileTree cfg={cfg} activeFile={previewFile} onSelect={(p,c)=>{setPreviewFile(p); setPreviewContent(c||'');}} />
                       </div>
-                    ))}
+                      <div className="file-preview-pane" aria-label="File preview" role="group">
+                        {previewFile ? (
+                          <React.Fragment>
+                            <div className="preview-header">{previewFile}</div>
+                            <pre className="preview-content" aria-label={`Contents of ${previewFile}`}>{previewContent || '/* empty file */'}</pre>
+                          </React.Fragment>
+                        ) : <div className="preview-placeholder">Select a file to preview its contents.</div>}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{marginTop:20, display:'grid', gap:12}}>
-                    {conflicts.map((c,i)=><div key={i} className="error" role="alert"><strong>Conflict:</strong> {c}</div>)}
-                    {warnings.map((w,i)=><div key={i} className="warning" role="alert"><strong>Note:</strong> {w}</div>)}
-                    {(!conflicts.length && !warnings.length) && <div className="warning" style={{background:'rgba(33,128,141,0.12)', borderColor:'rgba(33,128,141,0.4)', color:'var(--color-primary)'}}><strong>Great!</strong> No compatibility flags detected.</div>}
-                  </div>
-                </div>
-                <div className="section">
-                  <h2>File Tree Preview</h2>
-                  <FileTree cfg={cfg} />
                 </div>
               </div>
               <div className={"wizard-step "+(currentStep===4?'active':'')}>
