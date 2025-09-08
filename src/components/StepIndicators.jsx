@@ -11,17 +11,17 @@ export default function StepIndicators({ currentStep, steps, setStep }) {
   return (
     <div className="steps-bar" role="tablist" aria-label="Wizard Steps">
       {steps.map((label, i) => {
-        const step = i + 1;
-        const state = step === currentStep ? 'active' : (step < currentStep ? 'completed' : '');
+        // Use zero-based indices; stepIndex is i
+        const state = i === currentStep ? 'active' : (i < currentStep ? 'completed' : '');
         return (
           <button
             key={label}
             className={`step-indicator ${state}`}
-            aria-selected={step === currentStep}
-            aria-label={`Step ${step}: ${label}`}
-            onClick={() => setStep(step)}
+            aria-selected={i === currentStep}
+            aria-label={`Step ${i}: ${label}`}
+            onClick={() => setStep(i)}
           >
-            {step}
+            {i+1}
           </button>
         );
       })}
