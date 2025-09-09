@@ -35,6 +35,8 @@ export default function App() {
   const [originalContent, setOriginalContent] = useState('');
   const [editedOverrides, setEditedOverrides] = useState({});
   const [highlightCssLoaded, setHighlightCssLoaded] = useState(false);
+  // Track any templates applied during this session for accurate dashboard metrics
+  const [appliedTemplateIds, setAppliedTemplateIds] = useState([]);
   /**
    * Export setup script and config as ZIP file
    * @param {Object} cfg - Project config
@@ -67,13 +69,27 @@ export default function App() {
     }
     addNodes(structure, []);
 
-    zip.generateAsync({ type: 'blob' }).then(function(content) {
+  zip.generateAsync({ type: 'blob' }).then(function(content) {
       saveAs(content, `${cfg.projectName || 'genappxpress'}-setup.zip`);
       // Record history entry
       try {
         const history = JSON.parse(localStorage.getItem('genappxpress-history')||'[]');
-        history.push({ id: Date.now().toString(36), date: new Date().toISOString(), ...cfg });
-        localStorage.setItem('genappxpress-history', JSON.stringify(history.slice(-50))); // cap
+        // Always include templates field for dashboard metrics
+        let templatesArr = [];
+        if (cfg.templates && Array.isArray(cfg.templates)) {
+          templatesArr = cfg.templates;
+        } else if (cfg.templateId) {
+          templatesArr = [cfg.templateId];
+        }
+        // If a template was used, try to infer from projectName
+        if (templatesArr.length === 0 && cfg.projectName) {
+          const match = (TECH_STACK.templates || []).find(t => t.name === cfg.projectName || t.id === cfg.projectName);
+          if (match) templatesArr = [match.id];
+        }
+        history.push({ id: Date.now().toString(36), date: new Date().toISOString(), ...cfg, templates: templatesArr });
+  localStorage.setItem('genappxpress-history', JSON.stringify(history.slice(-50))); // cap
+  // Notify dashboard listeners (even if same template used again)
+  window.dispatchEvent(new CustomEvent('genappxpress-history-updated'));
       } catch(e) { /* ignore */ }
     });
   }
@@ -128,6 +144,11 @@ export default function App() {
     setShowTemplates(false);
     setView('wizard');
     setCurrentStep(2);
+    // Record template usage for later history entry
+    const tid = (templateObj.id || templateObj.name || '').toString();
+    if (tid && !appliedTemplateIds.includes(tid)) {
+      setAppliedTemplateIds(prev => prev.concat([tid]));
+    }
   }
 
   /**

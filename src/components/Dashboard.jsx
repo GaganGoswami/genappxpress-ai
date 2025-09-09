@@ -43,6 +43,18 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
     } catch (e) { /* ignore */ }
   }, [deleteId]);
 
+  // Listen for external history updates (e.g., repeated template use) and refresh
+  useEffect(() => {
+    function refresh(){
+      try {
+        const raw = JSON.parse(localStorage.getItem('genappxpress-history') || '[]');
+        setRecent(raw.slice(-10).reverse());
+      } catch(e) { /* ignore */ }
+    }
+    window.addEventListener('genappxpress-history-updated', refresh);
+    return () => window.removeEventListener('genappxpress-history-updated', refresh);
+  }, []);
+
   const handleDelete = (id) => {
     try {
       const raw = JSON.parse(localStorage.getItem('genappxpress-history') || '[]');
@@ -61,11 +73,17 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
     const total = recent.length;
     const estMinutesSaved = total * 80;
     const hoursSaved = (estMinutesSaved / 60).toFixed(1);
-    const byTemplate = recent.reduce((acc, r) => { (r.templates || []).forEach(t => { acc[t] = (acc[t] || 0) + 1; }); return acc; }, {});
-    return { total, hoursSaved, byTemplate };
+    // Aggregate distinct template usage across projects (dedupe within each project)
+    const byTemplate = recent.reduce((acc, r) => {
+      const uniq = Array.from(new Set(r.templates || []));
+      uniq.forEach(t => { acc[t] = true; });
+      return acc;
+    }, {});
+    const distinctTemplates = Object.keys(byTemplate).length;
+    return { total, hoursSaved, distinctTemplates, distinctTemplateIds: Object.keys(byTemplate) };
   }, [recent]);
 
-  const templateData = Object.entries(metrics.byTemplate).map(([name, value]) => ({ name, value }));
+  const templateData = (metrics.distinctTemplateIds || []).map(name => ({ name, value: 1 }));
   const pieColors = ['#21808d', '#2da6b2', '#2996a1', '#32b8c6', '#1a6873', '#13343b'];
 
   const recommended = useMemo(() => {
@@ -73,6 +91,29 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
     const all = (TECH_STACK.templates || []).map(t => t.id);
     return all.filter(t => !used.has(t)).slice(0, 4);
   }, [templateData]);
+
+  // Patch: handle template usage from gallery to update metrics/chart immediately
+  const handleTemplateUsage = (template) => {
+    // Create a new project entry for history
+    const now = new Date();
+    const entry = {
+      id: 't_' + now.getTime().toString(36),
+      projectName: template.name || template.id,
+      date: now.toISOString(),
+      type: 'App',
+      frontend: template.preset?.frontend?.map(f => TECH_STACK.frontend.find(x => x.id === f)?.name || f) || [],
+      backend: template.preset?.backend?.map(b => TECH_STACK.backend.find(x => x.id === b)?.name || b) || [],
+      aiFrameworks: template.preset?.aiFrameworks?.map(a => TECH_STACK.aiFrameworks.find(x => x.id === a)?.name || a) || [],
+      templates: [template.id],
+    };
+    try {
+      const raw = JSON.parse(localStorage.getItem('genappxpress-history') || '[]');
+      raw.push(entry);
+      localStorage.setItem('genappxpress-history', JSON.stringify(raw));
+      setRecent([entry, ...recent]);
+    } catch (e) { /* ignore */ }
+    if (onSelectTemplate) onSelectTemplate(template);
+  };
 
   return (
     <div className="dashboard-root" aria-label="Dashboard Home">
@@ -102,7 +143,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             <div className="metrics-summary">
               <div><strong>{metrics.total}</strong><span>Projects</span></div>
               <div><strong>{metrics.hoursSaved}</strong><span>Hours Saved*</span></div>
-              <div><strong>{templateData.length}</strong><span>Templates Used</span></div>
+              <div><strong>{metrics.distinctTemplates}</strong><span>Templates Used</span></div>
             </div>
             <div className="chart-row column">
               <div className="mini-chart" aria-label="Template usage pie chart">
@@ -148,7 +189,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
                   <div className="subhead" style={{marginTop: ordered[0]===cat?0:12}}>{cat}</div>
                   <div className="gallery small">
                     {groups[cat].map(t => (
-                      <button key={t.id} className="template-chip" title={t.description} onClick={() => onSelectTemplate && onSelectTemplate(t)}>{t.name}</button>
+                      <button key={t.id} className="template-chip" title={t.description} onClick={() => handleTemplateUsage(t)}>{t.name}</button>
                     ))}
                   </div>
                 </div>
