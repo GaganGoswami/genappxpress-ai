@@ -99,7 +99,8 @@
 }
 html,body {height:100%;}
 body {margin:0; font-family:var(--font-family-base); background:var(--color-background); color:var(--color-text); -webkit-font-smoothing:antialiased;}
-html, body { overflow: hidden; }
+/* Allow global vertical scrolling; only hide horizontal overflow to prevent sideways jitter */
+html, body { overflow-x: hidden; }
 /* Thin custom scrollbars for internal panels */
 .recent-panel .cards::-webkit-scrollbar,
 .templates-panel .gallery::-webkit-scrollbar,
@@ -197,9 +198,9 @@ html, body { overflow: hidden; }
 .dashboard-root {
   padding: 32px 16px 0; /* add horizontal padding to keep content inset */
   max-width: 100%;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   box-sizing: border-box;
+  overflow: visible; /* allow page to extend and use body scroll */
 }
 .dash-grid.wide {
   display: grid;
@@ -216,11 +217,10 @@ html, body { overflow: hidden; }
   gap: 20px;
   grid-template-columns: minmax(300px, 1fr) minmax(560px, 1.9fr) minmax(300px, 1fr);
   align-items: stretch;
-  width: 100%; /* was 100vw causing clipping */
-  max-width: 1500px; /* narrower to ensure full visibility on common screens */
-  margin: 0 auto;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto 48px; /* add bottom space so last panel not flush with footer */
   box-sizing: border-box;
-  height: calc(100vh - 64px);
   padding: 0 8px; /* slight inner padding to avoid edge cut */
 }
 
@@ -351,18 +351,37 @@ html, body { overflow: hidden; }
   min-height: 140px;
 }
 .fine-print { font-size: 11px; opacity: .6; margin-top: -4px; }
-.gallery { display: flex; flex-wrap: wrap; gap: 10px; }
-.gallery.small { gap: 8px; }
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  width: 100%;
+  align-items: stretch;
+}
+.gallery.small {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
 .template-chip {
   all: unset;
   cursor: pointer;
   background: var(--color-elevated);
   border: 1px solid var(--color-border);
-  padding: 8px 14px;
-  font-size: 13px;
+  padding: 0 10px;
+  font-size: 12px;
   border-radius: 999px;
   box-shadow: var(--shadow-sm);
   transition: background var(--duration-fast) var(--ease-standard);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
 }
 .template-chip:hover { background: var(--color-primary); color: #fff; }
 .template-chip.alt { background: rgba(33,128,141,0.12); border-color: var(--color-primary); color: var(--color-primary); }
