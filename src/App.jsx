@@ -107,11 +107,12 @@ export default function App() {
    * @param {Object} preset
    */
   function applyTemplate(preset) {
-    var updated = { ...selected };
-    Object.keys(emptySelection).forEach(function(k){ updated[k] = preset[k] || selected[k]; });
-    setSelected(updated);
-    localStorage.setItem('genappxpress-selected', JSON.stringify(updated));
+    const normalized = Object.keys(emptySelection).reduce((acc,k)=>{ acc[k] = Array.isArray(preset[k]) ? preset[k] : (selected[k]||[]); return acc; }, {});
+    setSelected(normalized);
+    localStorage.setItem('genappxpress-selected', JSON.stringify(normalized));
     setShowTemplates(false);
+    setView('wizard');
+    setCurrentStep(2);
   }
 
   /**
@@ -154,7 +155,7 @@ export default function App() {
    */
   function canNext() {
     if (currentStep === 1) return projectName.trim().length > 2;
-    if (currentStep === 2) return Object.values(selected).some(function(a){return a.length;});
+  if (currentStep === 2) return Object.values(selected).some(function(a){ return Array.isArray(a) && a.length>0; });
     return true;
   }
 
@@ -228,11 +229,9 @@ export default function App() {
           }}
           onSelectTemplate={(t)=>{
             if(t?.preset){
-              const preset=t.preset;
-              const updated={...selected};
-              Object.keys(emptySelection).forEach(k=>{ updated[k]=preset[k]||updated[k]; });
-              setSelected(updated);
-              localStorage.setItem('genappxpress-selected', JSON.stringify(updated));
+              const normalized = Object.keys(emptySelection).reduce((acc,k)=>{ acc[k] = Array.isArray(t.preset[k]) ? t.preset[k] : []; return acc; }, {});
+              setSelected(normalized);
+              localStorage.setItem('genappxpress-selected', JSON.stringify(normalized));
               setView('wizard');
               setCurrentStep(2);
             }
