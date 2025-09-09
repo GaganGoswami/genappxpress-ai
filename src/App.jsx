@@ -246,8 +246,8 @@ export default function App() {
   return (
     <div className="app-shell" role="main" aria-label="GenAppXpress">
       <header aria-label="App header">
-        <div className="logo" aria-hidden>GX</div>
-        <div className="title-block">
+        <div className="logo" aria-hidden style={{cursor:'pointer'}} onClick={()=>{setView('dashboard'); setCurrentStep(1);}} title="Go to Dashboard">GX</div>
+        <div className="title-block" style={{cursor:'pointer'}} onClick={()=>{setView('dashboard'); setCurrentStep(1);}} title="Go to Dashboard">
           <h1>GenAppXpress <span className="pill">ALPHA</span></h1>
           <div className="tagline">Visual full‑stack & agentic AI scaffolding · Export scripts & project files</div>
         </div>
