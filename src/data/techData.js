@@ -1,3 +1,34 @@
+/**
+ * GenAppXpress Tech Stack Data & Utilities
+ * ----------------------------------------
+ * This module defines the supported technology stacks, templates, and utility functions
+ * for project scaffolding, compatibility checking, environment generation, and script creation.
+ *
+ * ## Exports:
+ * - TECH_STACK: Object containing all supported frontend, backend, database, tools, AI frameworks, LLM providers, protocols, and templates.
+ * - CATEGORY_LABELS: Mapping of stack keys to human-readable labels.
+ * - checkCompatibility(selected): Checks for conflicts and warnings in a selected stack.
+ * - generateEnv(selected): Generates .env file content based on selected providers.
+ * - generateReadme(cfg): Creates a README.md string for the generated project.
+ * - generateStructure(cfg): Returns a nested object representing the project file structure and contents.
+ * - flattenStructure(struct, prefix): Flattens a nested structure to a list of file paths.
+ * - generateScript(cfg): Generates a bash setup script for the selected stack/template.
+ *
+ * ## Key Concepts:
+ * - Template Presets: Each template defines a preset stack (frontend, backend, AI, etc.) used for scaffolding and dependency aggregation.
+ * - Compatibility: Functions check for valid combinations and warn about unsupported pairings.
+ * - Script Generation: The setup script installs only the dependencies relevant to the selected template or stack.
+ * - Structure Generation: Project files are generated based on the selected stack and template, with enhancements for specific templates.
+ *
+ * ## Usage:
+ * Import this module in your React app or CLI to access stack data and utilities for project generation.
+ * Example:
+ *   import { TECH_STACK, generateScript } from './techData';
+ *   const script = generateScript({ projectName: 'MyApp', templates: ['ai-chatbot'], ... });
+ *
+ * ## For More Info:
+ * See README.md or visit the GenAppXpress documentation site.
+ */
 // Tech stack, labels, compatibility, and generation logic for GenAppXpress
 export const TECH_STACK = {
   frontend: [

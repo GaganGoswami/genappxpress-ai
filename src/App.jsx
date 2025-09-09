@@ -328,17 +328,87 @@ export default function App() {
       )}
       {showTemplates && <TemplateModal onClose={()=>setShowTemplates(false)} applyTemplate={applyTemplate} />}
       {showHelp && (
-        <div className="modal" role="dialog" aria-modal="true" aria-label="Usage Help" style={{zIndex:1000, background:'rgba(0,0,0,0.5)', position:'fixed', top:0, left:0, right:0, bottom:0}}>
-          <div className="modal-content" style={{background:'#fff', padding:32, maxWidth:500, margin:'40px auto', borderRadius:8}}>
-            <h2>GenAppXpress Usage Example</h2>
-            <ol style={{lineHeight:1.7}}>
-              <li>Fill in your project details and select technologies for each category.</li>
-              <li>Use <b>Templates</b> for quick presets.</li>
-              <li>Review compatibility and file tree preview.</li>
-              <li>Generate and export setup scripts and files.</li>
-              <li>Use keyboard navigation: <b>←</b>/<b>→</b> for steps, <b>Esc</b> to close modals.</li>
+        <div className="modal" role="dialog" aria-modal="true" aria-label="Usage Help" style={{zIndex:1000, background:'rgba(0,0,0,0.55)', position:'fixed', top:0, left:0, right:0, bottom:0, padding:'24px 12px', overflowY:'auto'}}>
+          <div className="modal-content" style={{background:'#fff', padding:32, maxWidth:760, margin:'0 auto', borderRadius:10, boxShadow:'0 8px 28px rgba(0,0,0,0.25)'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:24}}>
+              <h2 style={{marginTop:0}}>GenAppXpress Help & Guide</h2>
+              <button onClick={()=>setShowHelp(false)} className="secondary" aria-label="Close Help" style={{alignSelf:'flex-start'}}>Close</button>
+            </div>
+            <p style={{marginTop:-8, fontSize:14, color:'#555'}}>Version 0.1.0 · Rapid full‑stack + agentic AI project scaffolding. This guide summarizes how to use the dashboard & wizard effectively.</p>
+            <h3 style={{marginTop:24}}>1. Quick Start</h3>
+            <ol style={{lineHeight:1.55, paddingLeft:20}}>
+              <li>Click <b>Start Wizard</b> (or pick a template from Dashboard).</li>
+              <li>Step 1: Enter project meta (name, author, license, description).</li>
+              <li>Step 2: Select tech per category OR apply a <b>Template</b> preset.</li>
+              <li>Step 3: Review compatibility notices & inspect generated file tree (you can live‑edit files before export).</li>
+              <li>Step 4: Copy or export the setup script + full ZIP (includes edits).</li>
             </ol>
-            <button onClick={()=>setShowHelp(false)} style={{marginTop:24}}>Close</button>
+            <h3 style={{marginTop:24}}>2. Templates vs. Custom Selection</h3>
+            <ul style={{lineHeight:1.5, paddingLeft:20}}>
+              <li><b>Templates</b> instantly load a curated stack (frontend, backend, AI framework, provider, protocol).</li>
+              <li>When a single template is chosen, script generation narrows dependencies to that preset.</li>
+              <li>You can still adjust individual categories after applying a template.</li>
+            </ul>
+            <h3 style={{marginTop:24}}>3. Compatibility & Warnings</h3>
+            <ul style={{lineHeight:1.5, paddingLeft:20}}>
+              <li><b>Conflicts</b> highlight potentially unsupported frontend ⇄ backend pairs.</li>
+              <li><b>Notes</b> indicate unvalidated AI framework + provider combinations or protocol suggestions.</li>
+              <li>No entries = green state banner.</li>
+            </ul>
+            <h3 style={{marginTop:24}}>4. Generated Artifacts</h3>
+            <ul style={{lineHeight:1.5, paddingLeft:20}}>
+              <li><code>setup.sh</code>: Installs Node deps; if Python parts exist, creates <code>.venv</code> & installs frameworks/providers.</li>
+              <li><code>package.json</code>: Scripts for frontend (<code>dev</code>) & backend (<code>server</code>) plus <code>dev:full</code> if both exist.</li>
+              <li><code>requirements.txt</code>: Only when Python services or AI frameworks/providers are selected.</li>
+              <li><code>.env</code>: Placeholder API key variables for chosen LLM providers.</li>
+              <li><code>agents/</code>: Sample agent or framework starters (LangChain, CrewAI, etc.).</li>
+              <li><code>server/</code> or <code>api/</code>: Express or FastAPI service with optional chat/RAG routes.</li>
+              <li>Template enhancements: Extra docs, sample scripts, endpoints (e.g. RAG, Web Research, Multimodal Vision).</li>
+            </ul>
+            <h3 style={{marginTop:24}}>5. Editing Before Export</h3>
+            <ul style={{lineHeight:1.5, paddingLeft:20}}>
+              <li>Select a file in Step 3 to preview & inline edit. Your changes persist in this session until reload.</li>
+              <li>Edits override generated defaults inside the exported ZIP.</li>
+              <li>Use this to fine‑tune README, environment hints, or starter code.</li>
+            </ul>
+            <h3 style={{marginTop:24}}>6. Running the Project</h3>
+            <ol style={{lineHeight:1.55, paddingLeft:20}}>
+              <li><code>bash setup.sh</code> (or make executable with <code>chmod +x setup.sh</code>).</li>
+              <li>Add API keys to <code>.env</code> (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.).</li>
+              <li>If Python components: <code>source .venv/bin/activate</code>.</li>
+              <li>Start dev servers: <code>npm run dev</code>, <code>npm run server</code>, or <code>npm run dev:full</code>.</li>
+              <li>Run agents/examples: <code>python agents/run_all_agents.py</code> or individual scripts.</li>
+            </ol>
+            <h3 style={{marginTop:24}}>7. Keyboard & Accessibility</h3>
+            <ul style={{lineHeight:1.5, paddingLeft:20}}>
+              <li><b>← / →</b> Navigate wizard steps.</li>
+              <li><b>Esc</b> Close modals (Templates, Help).</li>
+              <li>Tab order honors logical reading flow; landmark roles used for screen readers.</li>
+            </ul>
+            <h3 style={{marginTop:24}}>8. Troubleshooting</h3>
+            <ul style={{lineHeight:1.5, paddingLeft:20}}>
+              <li><b>Missing Python deps?</b> Ensure virtualenv activated before running agents.</li>
+              <li><b>OpenAI errors?</b> Confirm API key + correct model names (defaults use gpt-4o-mini placeholder).</li>
+              <li><b>Port collisions?</b> Change Express port via <code>PORT=</code> in environment.</li>
+              <li><b>Ollama not responding?</b> Start local runtime (<code>ollama run llama3</code>) and set <code>OLLAMA_HOST</code> if remote.</li>
+            </ul>
+            <h3 style={{marginTop:24}}>9. Extending</h3>
+            <ul style={{lineHeight:1.5, paddingLeft:20}}>
+              <li>Add new templates by appending to <code>templates</code> in <code>techData.js</code>.</li>
+              <li>Inject extra compatibility logic inside <code>checkCompatibility</code>.</li>
+              <li>Generate additional scaffolds by enhancing <code>generateStructure()</code>.</li>
+            </ul>
+            <h3 style={{marginTop:24}}>10. Roadmap Ideas</h3>
+            <ul style={{lineHeight:1.5, paddingLeft:20}}>
+              <li>Template search & filtering.</li>
+              <li>Collapsible category groups in wizard.</li>
+              <li>One‑click deploy recipes (Docker / edge).</li>
+              <li>Semantic diff & AI refactor suggestions.</li>
+            </ul>
+            <div style={{marginTop:32, fontSize:12, color:'#666'}}>Generated help content – refine or customize directly in <code>App.jsx</code>. Feedback welcomed.</div>
+            <div style={{display:'flex', justifyContent:'flex-end', marginTop:16}}>
+              <button onClick={()=>setShowHelp(false)} aria-label="Close Help Dialog">Close</button>
+            </div>
           </div>
         </div>
       )}
