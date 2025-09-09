@@ -76,7 +76,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
 
   return (
     <div className="dashboard-root" aria-label="Dashboard Home">
-      <div className="dash-grid wide dash-grid-custom">
+      <div className="dash-grid dash-grid-threecol">
         <section className="panel recent-panel" aria-labelledby="recent-head">
           <div className="panel-header"><h2 id="recent-head">Recent Projects</h2></div>
           <div className="cards">
@@ -96,7 +96,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             ))}
           </div>
         </section>
-        <div className="panel-group">
+        <div className="centercol-group">
           <section className="panel metrics-panel" aria-labelledby="metrics-head">
             <div className="panel-header"><h2 id="metrics-head">Productivity Matrix</h2></div>
             <div className="metrics-summary">
