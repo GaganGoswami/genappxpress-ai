@@ -134,13 +134,28 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
           </section>
           <section className="panel templates-panel" aria-labelledby="templates-head">
             <div className="panel-header"><h2 id="templates-head">Template Gallery</h2></div>
-            <div className="gallery">
-              {(TECH_STACK.templates || []).slice(0, 8).map(t => (
-                <button key={t.id} className="template-chip" onClick={() => onSelectTemplate && onSelectTemplate(t)}>{t.name}</button>
-              ))}
-            </div>
-            {recommended.length > 0 && <div className="recommended">
-              <div className="subhead">Recommended</div>
+            {/* Group templates by category */}
+            {(() => {
+              const groups = (TECH_STACK.templates || []).reduce((acc, t) => {
+                const cat = t.category || 'Other';
+                acc[cat] = acc[cat] || [];
+                acc[cat].push(t);
+                return acc;
+              }, {});
+              const ordered = Object.keys(groups).sort();
+              return ordered.map(cat => (
+                <div key={cat} className="template-group" aria-label={cat+ ' templates'}>
+                  <div className="subhead" style={{marginTop: ordered[0]===cat?0:12}}>{cat}</div>
+                  <div className="gallery small">
+                    {groups[cat].map(t => (
+                      <button key={t.id} className="template-chip" title={t.description} onClick={() => onSelectTemplate && onSelectTemplate(t)}>{t.name}</button>
+                    ))}
+                  </div>
+                </div>
+              ));
+            })()}
+            {recommended.length > 0 && <div className="recommended" style={{marginTop:16}}>
+              <div className="subhead">Recommended (unused)</div>
               <div className="gallery small">
                 {recommended.map(r => <span key={r} className="template-chip alt">{r}</span>)}
               </div>

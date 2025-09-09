@@ -386,6 +386,7 @@ html, body { overflow-x: hidden; }
 .template-chip:hover { background: var(--color-primary); color: #fff; }
 .template-chip.alt { background: rgba(33,128,141,0.12); border-color: var(--color-primary); color: var(--color-primary); }
 [data-color-scheme="dark"] .template-chip.alt { background: rgba(50,184,198,0.15); }
+.template-group + .template-group { margin-top: 8px; }
 .subhead { font-size: 13px; font-weight: 600; margin: 6px 0 2px; opacity: .75; }
 .news-list {
   list-style: none;
@@ -504,3 +505,53 @@ html, body { overflow-x: hidden; }
 .template-card button:hover {
   background: var(--color-primary-hover);
 }
+/* Grouped Template Modal Enhancements */
+.template-dialog.template-dialog-large {
+  max-width: 1200px;
+  width: 96vw;
+  max-height: 88vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.template-groups {
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-top: 4px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px 24px;
+}
+@media (max-width: 900px) {
+  .template-groups { grid-template-columns: 1fr; }
+}
+.template-group-modal h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  letter-spacing: -.25px;
+  position: sticky;
+  top: 0;
+  background: var(--color-surface);
+  padding: 6px 4px 8px;
+  z-index: 1;
+  border-bottom: 1px solid var(--color-border);
+}
+.template-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+@media (max-width: 540px) {
+  .template-cards { grid-template-columns: 1fr; }
+}
+.template-card.small {
+  padding: 14px 14px 12px;
+  border-radius: 10px;
+  gap: 6px;
+}
+.template-card.small h4 { font-size: 14px; margin: 0 0 2px; }
+.template-card.small p { font-size: 12px; margin: 0 0 6px; line-height: 1.4; }
+.template-group-modal + .template-group-modal { margin-top: 0; }
+.template-groups::-webkit-scrollbar { width: 10px; }
+.template-groups::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.25); border-radius: 6px; }
+[data-color-scheme="dark"] .template-groups::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); }
