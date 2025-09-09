@@ -206,6 +206,28 @@ export default function App() {
     }
   }
 
+  // Dynamic styles for Help modal to ensure proper contrast in dark mode
+  const helpContainerStyle = useMemo(()=>({
+    zIndex:1000,
+    background: darkMode? 'rgba(0,0,0,0.65)':'rgba(0,0,0,0.55)',
+    position:'fixed', top:0, left:0, right:0, bottom:0,
+    padding:'24px 12px', overflowY:'auto'
+  }),[darkMode]);
+  const helpContentStyle = useMemo(()=>({
+    background: darkMode? '#102428':'#fff',
+    color: darkMode? '#d6f2f4':'#222',
+    padding:32,
+    maxWidth:760,
+    margin:'0 auto',
+    borderRadius:10,
+    boxShadow: darkMode? '0 8px 32px rgba(0,0,0,0.6)':'0 8px 28px rgba(0,0,0,0.25)',
+    border: darkMode? '1px solid #1f3d40':'1px solid #e2e5e5',
+    lineHeight:1.5
+  }),[darkMode]);
+  const helpHeadingStyle = { marginTop:0, color: darkMode? '#fff':'#111' };
+  const subtleTextStyle = { marginTop:-8, fontSize:14, color: darkMode? '#8fb9bd':'#555' };
+  const codeStyle = { background: darkMode? '#163136':'#f3f4f5', padding:'2px 5px', borderRadius:4, fontSize:'0.85em', fontFamily:'monospace' };
+
   return (
     <div className="app-shell" role="main" aria-label="GenAppXpress">
       <header aria-label="App header">
@@ -328,13 +350,13 @@ export default function App() {
       )}
       {showTemplates && <TemplateModal onClose={()=>setShowTemplates(false)} applyTemplate={applyTemplate} />}
       {showHelp && (
-        <div className="modal" role="dialog" aria-modal="true" aria-label="Usage Help" style={{zIndex:1000, background:'rgba(0,0,0,0.55)', position:'fixed', top:0, left:0, right:0, bottom:0, padding:'24px 12px', overflowY:'auto'}}>
-          <div className="modal-content" style={{background:'#fff', padding:32, maxWidth:760, margin:'0 auto', borderRadius:10, boxShadow:'0 8px 28px rgba(0,0,0,0.25)'}}>
+        <div className="modal" role="dialog" aria-modal="true" aria-label="Usage Help" style={helpContainerStyle}>
+          <div className="modal-content help-modal" style={helpContentStyle}>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:24}}>
-              <h2 style={{marginTop:0}}>GenAppXpress Help & Guide</h2>
+              <h2 style={helpHeadingStyle}>GenAppXpress Help & Guide</h2>
               <button onClick={()=>setShowHelp(false)} className="secondary" aria-label="Close Help" style={{alignSelf:'flex-start'}}>Close</button>
             </div>
-            <p style={{marginTop:-8, fontSize:14, color:'#555'}}>Version 0.1.0 · Rapid full‑stack + agentic AI project scaffolding. This guide summarizes how to use the dashboard & wizard effectively.</p>
+            <p style={subtleTextStyle}>Version 0.1.0 · Rapid full‑stack + agentic AI project scaffolding. This guide summarizes how to use the dashboard & wizard effectively.</p>
             <h3 style={{marginTop:24}}>1. Quick Start</h3>
             <ol style={{lineHeight:1.55, paddingLeft:20}}>
               <li>Click <b>Start Wizard</b> (or pick a template from Dashboard).</li>
@@ -357,12 +379,12 @@ export default function App() {
             </ul>
             <h3 style={{marginTop:24}}>4. Generated Artifacts</h3>
             <ul style={{lineHeight:1.5, paddingLeft:20}}>
-              <li><code>setup.sh</code>: Installs Node deps; if Python parts exist, creates <code>.venv</code> & installs frameworks/providers.</li>
-              <li><code>package.json</code>: Scripts for frontend (<code>dev</code>) & backend (<code>server</code>) plus <code>dev:full</code> if both exist.</li>
-              <li><code>requirements.txt</code>: Only when Python services or AI frameworks/providers are selected.</li>
-              <li><code>.env</code>: Placeholder API key variables for chosen LLM providers.</li>
-              <li><code>agents/</code>: Sample agent or framework starters (LangChain, CrewAI, etc.).</li>
-              <li><code>server/</code> or <code>api/</code>: Express or FastAPI service with optional chat/RAG routes.</li>
+              <li><code style={codeStyle}>setup.sh</code>: Installs Node deps; if Python parts exist, creates <code style={codeStyle}>.venv</code> & installs frameworks/providers.</li>
+              <li><code style={codeStyle}>package.json</code>: Scripts for frontend (<code style={codeStyle}>dev</code>) & backend (<code style={codeStyle}>server</code>) plus <code style={codeStyle}>dev:full</code> if both exist.</li>
+              <li><code style={codeStyle}>requirements.txt</code>: Only when Python services or AI frameworks/providers are selected.</li>
+              <li><code style={codeStyle}>.env</code>: Placeholder API key variables for chosen LLM providers.</li>
+              <li><code style={codeStyle}>agents/</code>: Sample agent or framework starters (LangChain, CrewAI, etc.).</li>
+              <li><code style={codeStyle}>server/</code> or <code style={codeStyle}>api/</code>: Express or FastAPI service with optional chat/RAG routes.</li>
               <li>Template enhancements: Extra docs, sample scripts, endpoints (e.g. RAG, Web Research, Multimodal Vision).</li>
             </ul>
             <h3 style={{marginTop:24}}>5. Editing Before Export</h3>
@@ -373,11 +395,11 @@ export default function App() {
             </ul>
             <h3 style={{marginTop:24}}>6. Running the Project</h3>
             <ol style={{lineHeight:1.55, paddingLeft:20}}>
-              <li><code>bash setup.sh</code> (or make executable with <code>chmod +x setup.sh</code>).</li>
-              <li>Add API keys to <code>.env</code> (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.).</li>
-              <li>If Python components: <code>source .venv/bin/activate</code>.</li>
-              <li>Start dev servers: <code>npm run dev</code>, <code>npm run server</code>, or <code>npm run dev:full</code>.</li>
-              <li>Run agents/examples: <code>python agents/run_all_agents.py</code> or individual scripts.</li>
+              <li><code style={codeStyle}>bash setup.sh</code> (or make executable with <code style={codeStyle}>chmod +x setup.sh</code>).</li>
+              <li>Add API keys to <code style={codeStyle}>.env</code> (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.).</li>
+              <li>If Python components: <code style={codeStyle}>source .venv/bin/activate</code>.</li>
+              <li>Start dev servers: <code style={codeStyle}>npm run dev</code>, <code style={codeStyle}>npm run server</code>, or <code style={codeStyle}>npm run dev:full</code>.</li>
+              <li>Run agents/examples: <code style={codeStyle}>python agents/run_all_agents.py</code> or individual scripts.</li>
             </ol>
             <h3 style={{marginTop:24}}>7. Keyboard & Accessibility</h3>
             <ul style={{lineHeight:1.5, paddingLeft:20}}>
@@ -394,9 +416,9 @@ export default function App() {
             </ul>
             <h3 style={{marginTop:24}}>9. Extending</h3>
             <ul style={{lineHeight:1.5, paddingLeft:20}}>
-              <li>Add new templates by appending to <code>templates</code> in <code>techData.js</code>.</li>
-              <li>Inject extra compatibility logic inside <code>checkCompatibility</code>.</li>
-              <li>Generate additional scaffolds by enhancing <code>generateStructure()</code>.</li>
+              <li>Add new templates by appending to <code style={codeStyle}>templates</code> in <code style={codeStyle}>techData.js</code>.</li>
+              <li>Inject extra compatibility logic inside <code style={codeStyle}>checkCompatibility</code>.</li>
+              <li>Generate additional scaffolds by enhancing <code style={codeStyle}>generateStructure()</code>.</li>
             </ul>
             <h3 style={{marginTop:24}}>10. Roadmap Ideas</h3>
             <ul style={{lineHeight:1.5, paddingLeft:20}}>
@@ -405,7 +427,7 @@ export default function App() {
               <li>One‑click deploy recipes (Docker / edge).</li>
               <li>Semantic diff & AI refactor suggestions.</li>
             </ul>
-            <div style={{marginTop:32, fontSize:12, color:'#666'}}>Generated help content – refine or customize directly in <code>App.jsx</code>. Feedback welcomed.</div>
+            <div style={{marginTop:32, fontSize:12, color: darkMode? '#5f8b8f':'#666'}}>Generated help content – refine or customize directly in <code style={codeStyle}>App.jsx</code>. Feedback welcomed.</div>
             <div style={{display:'flex', justifyContent:'flex-end', marginTop:16}}>
               <button onClick={()=>setShowHelp(false)} aria-label="Close Help Dialog">Close</button>
             </div>
