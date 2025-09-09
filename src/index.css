@@ -518,32 +518,26 @@ html, body { overflow-x: hidden; }
   overflow-y: auto;
   padding-right: 6px;
   margin-top: 4px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 20px 24px;
-}
-@media (max-width: 900px) {
-  .template-groups { grid-template-columns: 1fr; }
+  display: flex;
+  flex-direction: column;
+  gap: 32px; /* clear separation between groups */
 }
 .template-group-modal h3 {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
   font-size: 16px;
   letter-spacing: -.25px;
-  position: sticky;
-  top: 0;
-  background: var(--color-surface);
-  padding: 6px 4px 8px;
-  z-index: 1;
+  padding: 0 0 6px;
   border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  position: static; /* remove sticky to avoid large blank columns */
 }
 .template-cards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 16px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px 18px;
 }
-@media (max-width: 540px) {
-  .template-cards { grid-template-columns: 1fr; }
-}
+@media (max-width: 620px) { .template-cards { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); } }
+@media (max-width: 480px) { .template-cards { grid-template-columns: 1fr; } }
 .template-card.small {
   padding: 14px 14px 12px;
   border-radius: 10px;
@@ -551,7 +545,16 @@ html, body { overflow-x: hidden; }
 }
 .template-card.small h4 { font-size: 14px; margin: 0 0 2px; }
 .template-card.small p { font-size: 12px; margin: 0 0 6px; line-height: 1.4; }
-.template-group-modal + .template-group-modal { margin-top: 0; }
+.template-group-modal + .template-group-modal { margin-top: 0; position: relative; }
+.template-group-modal + .template-group-modal:before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--color-border), transparent);
+}
 .template-groups::-webkit-scrollbar { width: 10px; }
 .template-groups::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.25); border-radius: 6px; }
 [data-color-scheme="dark"] .template-groups::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); }
