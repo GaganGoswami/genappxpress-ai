@@ -106,10 +106,25 @@ export default function App() {
    * Apply a template preset
    * @param {Object} preset
    */
-  function applyTemplate(preset) {
+  function applyTemplate(templateObj) {
+    // templateObj may be a preset (from modal) or full template; detect shape
+    const preset = templateObj.preset || templateObj; // support passing full template
     const normalized = Object.keys(emptySelection).reduce((acc,k)=>{ acc[k] = Array.isArray(preset[k]) ? preset[k] : (selected[k]||[]); return acc; }, {});
     setSelected(normalized);
     localStorage.setItem('genappxpress-selected', JSON.stringify(normalized));
+    // If project name hasn't been customized (still default pattern) then set to template id or name
+    setProjectName(prevName => {
+      const defaultPatterns = ['my-awesome-project','my-project','new-project'];
+      if (defaultPatterns.includes(prevName.trim().toLowerCase())) {
+        const base = (templateObj.name || templateObj.id || 'project').toString()
+          .replace(/[^a-z0-9-_\s]/gi,'')
+          .trim()
+          .replace(/\s+/g,'-')
+          .toLowerCase();
+        return base || prevName;
+      }
+      return prevName; // user already customized
+    });
     setShowTemplates(false);
     setView('wizard');
     setCurrentStep(2);

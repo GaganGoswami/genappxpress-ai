@@ -61,7 +61,7 @@ export default function TemplateModal({ onClose, applyTemplate }) {
                   <div className="template-card small" key={t.id} role="listitem">
                     <h4>{t.name}</h4>
                     <p>{t.description}</p>
-                    <button onClick={() => applyTemplate(t.preset)} aria-label={`Use ${t.name} template`}>Use</button>
+                    <button onClick={() => applyTemplate(t)} aria-label={`Use ${t.name} template`}>Use</button>
                   </div>
                 ))}
               </div>
