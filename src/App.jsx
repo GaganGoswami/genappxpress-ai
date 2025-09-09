@@ -71,27 +71,38 @@ export default function App() {
 
   zip.generateAsync({ type: 'blob' }).then(function(content) {
       saveAs(content, `${cfg.projectName || 'genappxpress'}-setup.zip`);
-      // Record history entry
-      try {
-        const history = JSON.parse(localStorage.getItem('genappxpress-history')||'[]');
-        // Always include templates field for dashboard metrics
-        let templatesArr = [];
-        if (cfg.templates && Array.isArray(cfg.templates)) {
-          templatesArr = cfg.templates;
-        } else if (cfg.templateId) {
-          templatesArr = [cfg.templateId];
-        }
-        // If a template was used, try to infer from projectName
-        if (templatesArr.length === 0 && cfg.projectName) {
-          const match = (TECH_STACK.templates || []).find(t => t.name === cfg.projectName || t.id === cfg.projectName);
-          if (match) templatesArr = [match.id];
-        }
-        history.push({ id: Date.now().toString(36), date: new Date().toISOString(), ...cfg, templates: templatesArr });
-  localStorage.setItem('genappxpress-history', JSON.stringify(history.slice(-50))); // cap
-  // Notify dashboard listeners (even if same template used again)
-  window.dispatchEvent(new CustomEvent('genappxpress-history-updated'));
-      } catch(e) { /* ignore */ }
+      // Record history entry (shared with Copy Script action)
+      recordHistory(cfg, appliedTemplateIds);
     });
+  }
+
+  /**
+   * Record a project generation event in history for metrics/dashboard.
+   * Used by both Export ZIP and Copy Script to keep stats consistent.
+   * @param {Object} cfg - Current project config
+   * @param {string[]} templateIdsHint - Template ids applied this session
+   */
+  function recordHistory(cfg, templateIdsHint = []) {
+    try {
+      const history = JSON.parse(localStorage.getItem('genappxpress-history')||'[]');
+      // Derive templates array with multiple fallbacks
+      let templatesArr = [];
+      if (Array.isArray(cfg.templates) && cfg.templates.length) {
+        templatesArr = cfg.templates;
+      } else if (cfg.templateId) {
+        templatesArr = [cfg.templateId];
+      } else if (templateIdsHint.length) {
+        templatesArr = templateIdsHint;
+      } else if (cfg.projectName) {
+        const match = (TECH_STACK.templates || []).find(t => t.name === cfg.projectName || t.id === cfg.projectName);
+        if (match) templatesArr = [match.id];
+      }
+      // Deduplicate templates just in case
+      templatesArr = Array.from(new Set(templatesArr));
+      history.push({ id: Date.now().toString(36), date: new Date().toISOString(), ...cfg, templates: templatesArr });
+      localStorage.setItem('genappxpress-history', JSON.stringify(history.slice(-50))); // cap to last 50
+      window.dispatchEvent(new CustomEvent('genappxpress-history-updated'));
+    } catch (e) { /* ignore */ }
   }
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem('genappxpress-theme');
@@ -359,7 +370,15 @@ export default function App() {
                 <h2>Generated Setup Script</h2>
                 <ScriptPreview cfg={cfg} />
                 <div style={{marginTop:16, display:'flex', gap:12, flexWrap:'wrap'}}>
-                  <button onClick={()=>navigator.clipboard.writeText(generateScript(cfg))}>Copy Script</button>
+                  <button onClick={()=>{
+                    // Copy script and record history similarly to exporting a ZIP
+                    navigator.clipboard.writeText(generateScript(cfg)).then(()=>{
+                      recordHistory(cfg, appliedTemplateIds);
+                    }).catch(()=>{
+                      // Even if copy fails (permissions), still record to keep metrics consistent
+                      recordHistory(cfg, appliedTemplateIds);
+                    });
+                  }}>Copy Script</button>
                   <button onClick={()=>exportZip(cfg)}>Export ZIP</button>
                 </div>
               </div>
