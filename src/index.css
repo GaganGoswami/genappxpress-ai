@@ -568,3 +568,43 @@ html, body { overflow-x: hidden; }
 .template-groups::-webkit-scrollbar { width: 10px; }
 .template-groups::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.25); border-radius: 6px; }
 [data-color-scheme="dark"] .template-groups::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); }
+
+/* ==========================================================
+   COMPACT LAYOUT OVERRIDES (Space-saving adjustments)
+   These overrides intentionally appear at end of file so they
+   win cascade without editing original blocks (easier diff).
+   Adjust values further if an ultra-dense mode is desired.
+   ========================================================== */
+ .dashboard-root { padding:20px 12px 0; }
+ .dash-grid-threecol { gap:16px; margin:0 auto 32px; padding:0 4px; }
+ .panel { padding:14px 16px 16px; gap:10px; }
+ .card.card-wide { padding:12px 12px 10px; gap:6px; }
+ .card-actions { gap:6px; margin-top:6px; }
+ .card-btn { padding:5px 12px; font-size:12px; }
+ .metrics-summary { gap:16px; margin-bottom:6px; }
+ .metrics-summary > div { padding:10px 12px; border-radius:10px; gap:4px; }
+ .mini-chart { padding:8px 10px; min-height:120px; }
+ .gallery { gap:6px; }
+ .template-dialog { padding:20px 20px 16px; gap:12px; }
+ .template-cards { gap:12px 12px; }
+ .template-card { padding:14px 12px 10px; gap:6px; }
+ .template-card.small { padding:10px 10px 8px; gap:4px; }
+ .template-group-modal h3 { margin:0 0 8px; padding:0 0 4px; }
+ .template-groups { gap:24px; }
+ .steps-bar { gap:8px; padding:8px 4px; }
+ .step-indicator { width:32px; height:32px; font-size:13px; }
+ .file-preview-layout { gap:10px; }
+ .file-tree { padding:8px; }
+ .tree-entry { padding:2px 4px; gap:6px; }
+ .preview-header { padding:6px 10px; }
+ .preview-content { padding:10px 12px; }
+ .code-block { padding:10px 12px; }
+ .code-editor textarea { padding:8px 10px; }
+ .code-editor .hljs-overlay { padding:8px 10px; }
+ .preview-placeholder { padding:20px; }
+/* Tech Stack Selection compact card overrides */
+.tech-grid { gap:10px; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); }
+.tech-option { padding:12px 12px 10px; gap:4px; min-height:100px; }
+.tech-option h4 { margin:0 0 2px; font-size:13px; }
+.tech-option p { font-size:11px; line-height:1.3; }
+.tech-option .checkbox, .checkbox { top:8px; right:8px; width:18px; height:18px; font-size:12px; }

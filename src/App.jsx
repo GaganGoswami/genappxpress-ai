@@ -286,7 +286,7 @@ export default function App() {
         <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle color theme">{darkMode? 'Light Mode':'Dark Mode'}</button>
         <button className="secondary" onClick={()=>setShowTemplates(true)}>Templates</button>
         <button className="secondary" onClick={()=>setShowHelp(true)} aria-label="Show usage/help">Help</button>
-        <button className="secondary" onClick={()=>setView(view==='dashboard'?'wizard':'dashboard')} aria-label="Go to Dashboard" style={{marginLeft:8}}>{view==='dashboard'?'Start Wizard':'Dashboard'}</button>
+        <button className="secondary" onClick={()=>setView(view==='dashboard'?'wizard':'dashboard')} aria-label="Go to Dashboard" style={{marginLeft:8}}>{view==='dashboard'?'Generate App':'Dashboard'}</button>
       </header>
       {view==='dashboard' ? (
         <Dashboard
@@ -414,7 +414,7 @@ export default function App() {
             <p style={subtleTextStyle}>Version 0.1.0 · Rapid full‑stack + agentic AI project scaffolding. This guide summarizes how to use the dashboard & wizard effectively.</p>
             <h3 style={{marginTop:24}}>1. Quick Start</h3>
             <ol style={{lineHeight:1.55, paddingLeft:20}}>
-              <li>Click <b>Start Wizard</b> (or pick a template from Dashboard).</li>
+              <li>Click <b>Generate App</b> (or pick a template from Dashboard).</li>
               <li>Step 1: Enter project meta (name, author, license, description).</li>
               <li>Step 2: Select tech per category OR apply a <b>Template</b> preset.</li>
               <li>Step 3: Review compatibility notices & inspect generated file tree (you can live‑edit files before export).</li>
