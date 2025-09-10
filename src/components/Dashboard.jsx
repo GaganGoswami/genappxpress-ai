@@ -541,7 +541,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             {stackInsights && stackInsights.topTemplates && stackInsights.topTemplates.length > 0 && 
               stackInsights.topTemplates.map((template, i) => (
                 <li key={`template-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#9C27B0'}}>📋 Template</div>
+                  <div className="news-tag" style={{background: '#9C27B0'}}>Template</div>
                   <div className="news-body">
                     <div className="news-title">{template.template}</div>
                     <div className="news-date">Used in {template.percentage}% of projects</div>
@@ -554,7 +554,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             {stackInsights && stackInsights.techTrends && stackInsights.techTrends.length > 0 && 
               stackInsights.techTrends.map((trend, i) => (
                 <li key={`trend-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#673AB7'}}>📈 Trend</div>
+                  <div className="news-tag" style={{background: '#673AB7'}}>Trend</div>
                   <div className="news-body">
                     <div className="news-title">{trend}</div>
                     <div className="news-date">Development Pattern</div>
@@ -567,7 +567,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             {stackInsights && stackInsights.suggestions && stackInsights.suggestions.length > 0 && 
               stackInsights.suggestions.map((suggestion, i) => (
                 <li key={`suggestion-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#2196F3'}}>💡 Enhance</div>
+                  <div className="news-tag" style={{background: '#2196F3'}}>Enhance</div>
                   <div className="news-body">
                     <div className="news-title">{suggestion}</div>
                     <div className="news-date">Recommended Addition</div>
@@ -580,7 +580,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             {stackInsights && stackInsights.warnings && stackInsights.warnings.length > 0 && 
               stackInsights.warnings.map((warning, i) => (
                 <li key={`warning-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#FF9800'}}>⚠️ Alert</div>
+                  <div className="news-tag" style={{background: '#FF9800'}}>Alert</div>
                   <div className="news-body">
                     <div className="news-title">{warning}</div>
                     <div className="news-date">Potential Conflict</div>
@@ -593,7 +593,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             {stackInsights && stackInsights.tips && stackInsights.tips.length > 0 && 
               stackInsights.tips.map((tip, i) => (
                 <li key={`tip-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#4CAF50'}}>🚀 Optimize</div>
+                  <div className="news-tag" style={{background: '#4CAF50'}}>Optimize</div>
                   <div className="news-body">
                     <div className="news-title">{tip}</div>
                     <div className="news-date">Performance Boost</div>
@@ -606,7 +606,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             {stackInsights && stackInsights.security && stackInsights.security.length > 0 && 
               stackInsights.security.map((sec, i) => (
                 <li key={`security-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#E91E63'}}>🔒 Security</div>
+                  <div className="news-tag" style={{background: '#E91E63'}}>Security</div>
                   <div className="news-body">
                     <div className="news-title">{sec}</div>
                     <div className="news-date">Security Enhancement</div>
