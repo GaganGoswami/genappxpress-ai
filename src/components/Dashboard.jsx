@@ -312,21 +312,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             </div>}
           </section>
         </div>
-        <section className="panel news-panel" aria-labelledby="news-head">
-          <div className="panel-header"><h2 id="news-head">Trends & Updates</h2></div>
-          <ul className="news-list">
-            {loadingNews && <li className="placeholder">Loading feed...</li>}
-            {news.map(item => (
-              <li key={item.id} className="news-item">
-                <div className="news-tag">{item.tag}</div>
-                <div className="news-body">
-                  <div className="news-title">{item.title}</div>
-                  <div className="news-date">{item.date}</div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <div>
         <section className="panel nlp-panel" aria-labelledby="nlp-head">
           <div className="panel-header"><h2 id="nlp-head">NLP Template Builder (Preview)</h2></div>
           <div className="field" style={{display:'flex', flexDirection:'column', gap:8}}>
@@ -356,6 +342,23 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             </div>
           )}
         </section>
+        <section className="panel news-panel" aria-labelledby="news-head">
+          <div className="panel-header"><h2 id="news-head">Trends & Updates</h2></div>
+          <ul className="news-list">
+            {loadingNews && <li className="placeholder">Loading feed...</li>}
+            {news.map(item => (
+              <li key={item.id} className="news-item">
+                <div className="news-tag">{item.tag}</div>
+                <div className="news-body">
+                  <div className="news-title">{item.title}</div>
+                  <div className="news-date">{item.date}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+        </div>
+
       </div>
     </div>
   );
