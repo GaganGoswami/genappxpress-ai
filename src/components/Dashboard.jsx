@@ -11,6 +11,9 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
   const [news, setNews] = useState([]);
   const [loadingNews, setLoadingNews] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  // NLP draft generation state (rule-based heuristic, no real LLM)
+  const [nlpInput, setNlpInput] = useState('');
+  const [nlpAnalysis, setNlpAnalysis] = useState(null);
 
   // Simulate feed (could be replaced with real API)
   useEffect(() => {
@@ -91,6 +94,93 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
     const all = (TECH_STACK.templates || []).map(t => t.id);
     return all.filter(t => !used.has(t)).slice(0, 4);
   }, [templateData]);
+
+  // --- Heuristic NLP analyzer (simple keyword rules) ---
+  function analyzeNlp(text){
+    const original = text.trim();
+    if(!original){ setNlpAnalysis(null); return; }
+    const t = original.toLowerCase();
+    const keywordTemplates = [
+      {re:/(chat|conversation|chatbot)/, id:'ai-chatbot'},
+      {re:/(support|ticket)/, id:'support-triage'},
+      {re:/(slack)/, id:'slack-bot'},
+      {re:/(rag|retrieval|vector)/, id:'rag-service'},
+      {re:/(pdf)/, id:'pdf-chat'},
+      {re:/(ingest|pipeline)/, id:'vector-ingest'},
+      {re:/(research|web research|browsing)/, id:'web-research'},
+      {re:/(process|automate|automation)/, id:'process-automator'},
+      {re:/(cron|schedule)/, id:'cron-agent'},
+      {re:/(workflow)/, id:'workflow-designer'},
+      {re:/(orchestrator|router)/, id:'agent-orchestrator'},
+      {re:/(code assistant|code-assistant|mcp)/, id:'code-assistant-mcp'},
+      {re:/(eval|evaluation)/, id:'evaluation-suite'},
+      {re:/(analytics|dashboard)/, id:'analytics-dashboard'},
+      {re:/(multimodal|image|vision)/, id:'multimodal-assistant'},
+      {re:/(local|offline)/, id:'local-first'},
+      {re:/(edge)/, id:'edge-functions'},
+      {re:/(email)/, id:'email-assistant'},
+      {re:/(jira)/, id:'jira-helper'},
+      {re:/(knowledge|docs|documentation)/, id:'knowledge-base'},
+    ];
+    let templateId = null;
+    for(const k of keywordTemplates){ if(k.re.test(t)){ templateId = k.id; break; } }
+    // Basic stack extraction (IDs)
+    const stack = { frontend:[], backend:[], database:[], tools:[], aiFrameworks:[], llmProviders:[], protocols:[] };
+    function pushIf(cond, arr, val){ if(cond && !arr.includes(val)) arr.push(val); }
+    pushIf(/react/.test(t), stack.frontend, 'react');
+    pushIf(/vue/.test(t), stack.frontend, 'vue');
+    pushIf(/next/.test(t), stack.frontend, 'nextjs');
+    pushIf(/express|node/.test(t), stack.backend, 'express');
+    pushIf(/fastapi|python/.test(t), stack.backend, 'fastapi');
+    pushIf(/postgres|pg\b/.test(t), stack.database, 'postgresql');
+    pushIf(/mongo/.test(t), stack.database, 'mongodb');
+    pushIf(/redis/.test(t), stack.database, 'redis');
+    pushIf(/typescript|ts\b/.test(t), stack.tools, 'typescript');
+    pushIf(/eslint|lint/.test(t), stack.tools, 'eslint');
+    pushIf(/docker|container/.test(t), stack.tools, 'docker');
+    pushIf(/langchain/.test(t), stack.aiFrameworks, 'langchain');
+    pushIf(/crewai|crew ai/.test(t), stack.aiFrameworks, 'crewai');
+    pushIf(/langgraph/.test(t), stack.aiFrameworks, 'langgraph');
+    pushIf(/semantic kernel|semantic-kernel/.test(t), stack.aiFrameworks, 'semantic-kernel');
+    pushIf(/autogen|auto gen/.test(t), stack.aiFrameworks, 'autogen');
+    pushIf(/openai/.test(t), stack.llmProviders, 'openai');
+    pushIf(/anthropic|claude/.test(t), stack.llmProviders, 'anthropic');
+    pushIf(/gemini|google/.test(t), stack.llmProviders, 'gemini');
+    pushIf(/grok|xai|x-ai/.test(t), stack.llmProviders, 'xai');
+    pushIf(/ollama|local model/.test(t), stack.llmProviders, 'ollama');
+    pushIf(/mcp/.test(t), stack.protocols, 'mcp');
+    pushIf(/swarm/.test(t), stack.protocols, 'swarm');
+    // If template discovered, merge its preset to ensure baseline
+    let templateObj = null;
+    if(templateId){
+      templateObj = (TECH_STACK.templates||[]).find(tpl => tpl.id === templateId);
+      if(templateObj && templateObj.preset){
+        Object.keys(stack).forEach(cat => {
+          const presetVals = templateObj.preset[cat] || [];
+          presetVals.forEach(v => { if(!stack[cat].includes(v)) stack[cat].push(v); });
+        });
+      }
+    }
+    // Derive project name
+    const projectName = (templateObj?.name || (original.split(/\s+/).slice(0,3).join('-')) || 'nlp-draft').replace(/[^a-z0-9-_]/gi,'-').toLowerCase();
+    setNlpAnalysis({ templateId, stack, projectName, matched: keywordTemplates.filter(k=>k.re.test(t)).map(k=>k.id) });
+  }
+
+  function applyNlpTemplate(){
+    if(!nlpAnalysis) return;
+    if(nlpAnalysis.templateId){
+      const tpl = (TECH_STACK.templates||[]).find(t=>t.id===nlpAnalysis.templateId);
+      if(tpl){ handleTemplateUsage(tpl); return; }
+    }
+  }
+
+  function openCustomFromNlp(){
+    if(!nlpAnalysis) return;
+    if(!onOpenProject) return;
+    const now = new Date();
+    const draft = { id: 'nlp_'+now.getTime().toString(36), date: now.toISOString(), projectName: nlpAnalysis.projectName, type:'Draft', templates: nlpAnalysis.templateId?[nlpAnalysis.templateId]:[], ...nlpAnalysis.stack };
+    onOpenProject(draft); // normalization handled by existing logic
+  }
 
   // Patch: handle template usage from gallery to update metrics/chart immediately
   const handleTemplateUsage = (template) => {
@@ -236,6 +326,35 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
               </li>
             ))}
           </ul>
+        </section>
+        <section className="panel nlp-panel" aria-labelledby="nlp-head">
+          <div className="panel-header"><h2 id="nlp-head">NLP Template Builder (Preview)</h2></div>
+          <div className="field" style={{display:'flex', flexDirection:'column', gap:8}}>
+            <label htmlFor="nlp-input" style={{fontSize:12, textTransform:'uppercase', letterSpacing:'.05em'}}>Describe your application</label>
+            <textarea id="nlp-input" value={nlpInput} onChange={e=>setNlpInput(e.target.value)} placeholder="e.g. Build a RAG service with FastAPI backend and React UI using OpenAI and LangChain" rows={3} style={{resize:'vertical'}} />
+            <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+              <button className="secondary" onClick={()=>analyzeNlp(nlpInput)} disabled={!nlpInput.trim()}>Analyze</button>
+              {nlpAnalysis && nlpAnalysis.templateId && <button onClick={applyNlpTemplate}>Apply Suggested Template</button>}
+              {nlpAnalysis && <button onClick={openCustomFromNlp}>Use Suggested Stack</button>}
+              {nlpAnalysis && <button className="ghost" onClick={()=>{setNlpAnalysis(null); setNlpInput('');}}>Reset</button>}
+            </div>
+          </div>
+          {nlpAnalysis && (
+            <div className="nlp-results" style={{marginTop:12, fontSize:13, lineHeight:1.5}}>
+              {nlpAnalysis.templateId ? (
+                <div><strong>Suggested Template:</strong> {nlpAnalysis.templateId}</div>
+              ) : <div><strong>No single template matched.</strong> Using custom heuristic stack.</div>}
+              <div style={{marginTop:6}}>
+                <strong>Stack Draft:</strong>
+                <ul style={{margin:'4px 0 0 16px', padding:0}}>
+                  {Object.entries(nlpAnalysis.stack).map(([k,v])=> v.length>0 && <li key={k}><span style={{textTransform:'capitalize'}}>{k}</span>: {v.join(', ')}</li>)}
+                  {Object.values(nlpAnalysis.stack).every(a=>!a.length) && <li>(none detected)</li>}
+                </ul>
+              </div>
+              {nlpAnalysis.matched && nlpAnalysis.matched.length>1 && <div style={{marginTop:6, opacity:0.75}}>Multiple template signals detected: {nlpAnalysis.matched.join(', ')} (picked first match).</div>}
+              <div style={{marginTop:8, fontSize:11, opacity:0.7}}>Rule‑based parsing only. No live LLM calls. Improve description for better matches.</div>
+            </div>
+          )}
         </section>
       </div>
     </div>
