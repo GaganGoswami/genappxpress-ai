@@ -129,7 +129,26 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
                 <div className="stack-line">{[...(r.frontend || []), ...(r.backend || []), ...(r.aiFrameworks || [])].join(', ')}</div>
                 {r.templates && r.templates.length > 0 && <div className="badge-line">{r.templates.join('  ')} </div>}
                 <div className="card-actions">
-                  <button className="card-btn" title="Open" onClick={() => onOpenProject && onOpenProject(r)}>Open</button>
+                  <button className="card-btn" title="Open" onClick={() => {
+                    if(!onOpenProject) return;
+                    // Normalize any display names to internal IDs so wizard pre-selects correctly
+                    const catKeys = ['frontend','backend','database','tools','aiFrameworks','llmProviders','protocols'];
+                    const norm = { ...r };
+                    catKeys.forEach(cat => {
+                      const list = Array.isArray(r[cat]) ? r[cat] : [];
+                      norm[cat] = list.map(val => {
+                        if(!val || typeof val !== 'string') return val;
+                        const lower = val.toLowerCase();
+                        // Direct id match
+                        const direct = (TECH_STACK[cat]||[]).find(t => t.id === lower);
+                        if(direct) return direct.id;
+                        // Name match
+                        const byName = (TECH_STACK[cat]||[]).find(t => t.name.toLowerCase() === lower);
+                        return byName ? byName.id : val; // fallback original value
+                      });
+                    });
+                    onOpenProject(norm);
+                  }}>Open</button>
                   <button className="card-btn" title="Export" onClick={() => handleExport(r)}>Export</button>
                   <button className="card-btn danger" title="Delete" onClick={() => handleDelete(r.id)}>Delete</button>
                 </div>

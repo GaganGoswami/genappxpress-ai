@@ -292,7 +292,9 @@ export default function App() {
         <Dashboard
           onOpenProject={(p)=>{
             setProjectName(p.projectName);
-            setSelected({frontend:p.frontend||[], backend:p.backend||[], database:p.database||[], tools:p.tools||[], aiFrameworks:p.aiFrameworks||[], llmProviders:p.llmProviders||[], protocols:p.protocols||[]});
+            const restored = {frontend:p.frontend||[], backend:p.backend||[], database:p.database||[], tools:p.tools||[], aiFrameworks:p.aiFrameworks||[], llmProviders:p.llmProviders||[], protocols:p.protocols||[]};
+            setSelected(restored);
+            try { localStorage.setItem('genappxpress-selected', JSON.stringify(restored)); } catch(e) { /* ignore */ }
             setView('wizard');
             setCurrentStep(3);
           }}
