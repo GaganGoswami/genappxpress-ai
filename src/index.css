@@ -608,3 +608,12 @@ html, body { overflow-x: hidden; }
 .tech-option h4 { margin:0 0 2px; font-size:13px; }
 .tech-option p { font-size:11px; line-height:1.3; }
 .tech-option .checkbox, .checkbox { top:8px; right:8px; width:18px; height:18px; font-size:12px; }
+/* Dynamic Template Gallery Pills */
+/* Convert small gallery to flex so pills can autosize */
+.templates-panel .gallery.small { display:flex; flex-wrap:wrap; gap:6px; }
+/* Allow recommended section too */
+.templates-panel .recommended .gallery.small { display:flex; flex-wrap:wrap; }
+/* Override pill sizing constraints */
+.templates-panel .template-chip { width:auto; flex:0 0 auto; white-space:nowrap; overflow:visible; text-overflow:initial; max-width:100%; }
+/* If names get very long, allow wrapping on hyphens/underscores */
+.templates-panel .template-chip { word-break:break-word; }
