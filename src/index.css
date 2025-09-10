@@ -617,3 +617,5 @@ html, body { overflow-x: hidden; }
 .templates-panel .template-chip { width:auto; flex:0 0 auto; white-space:nowrap; overflow:visible; text-overflow:initial; max-width:100%; }
 /* If names get very long, allow wrapping on hyphens/underscores */
 .templates-panel .template-chip { word-break:break-word; }
+
+

@@ -95,6 +95,179 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
     return all.filter(t => !used.has(t)).slice(0, 4);
   }, [templateData]);
 
+  // Stack Insights analytics - Enhanced with comprehensive analysis
+  const stackInsights = useMemo(() => {
+    if (recent.length === 0) return null;
+
+    // Popular combinations analysis
+    const combinations = {};
+    const allStacks = recent.map(r => {
+      const stack = [
+        ...(r.frontend || []).map(f => `F:${f}`),
+        ...(r.backend || []).map(b => `B:${b}`),
+        ...(r.database || []).map(d => `D:${d}`),
+        ...(r.aiFrameworks || []).map(a => `AI:${a}`)
+      ];
+      return stack.sort().join(' + ');
+    });
+
+    allStacks.forEach(combo => {
+      combinations[combo] = (combinations[combo] || 0) + 1;
+    });
+
+    const popularCombos = Object.entries(combinations)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3)
+      .map(([combo, count]) => ({
+        combo: combo.replace(/[FBDAI]+:/g, '').replace(/\s\+\s/g, ' + '),
+        count,
+        percentage: Math.round((count / recent.length) * 100)
+      }));
+
+    // Enhanced template usage analysis
+    const templateStats = {};
+    recent.forEach(r => {
+      (r.templates || []).forEach(template => {
+        templateStats[template] = (templateStats[template] || 0) + 1;
+      });
+    });
+
+    const topTemplates = Object.entries(templateStats)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3)
+      .map(([template, count]) => ({
+        template,
+        count,
+        percentage: Math.round((count / recent.length) * 100)
+      }));
+
+    // Technology trend analysis
+    const techTrends = [];
+    const frontendCount = recent.filter(r => (r.frontend || []).length > 0).length;
+    const aiCount = recent.filter(r => (r.aiFrameworks || []).length > 0).length;
+    const fullStackCount = recent.filter(r => (r.frontend || []).length > 0 && (r.backend || []).length > 0).length;
+    
+    if (aiCount / recent.length >= 0.5) {
+      techTrends.push('AI-First Development: 75% of projects use AI frameworks');
+    }
+    if (fullStackCount / recent.length >= 0.6) {
+      techTrends.push('Full-Stack Dominance: Most projects include both frontend & backend');
+    }
+    if (frontendCount / recent.length >= 0.8) {
+      techTrends.push('Frontend-Heavy: 80%+ projects prioritize user interfaces');
+    }
+
+    // Enhanced missing dependencies analysis
+    const missingDeps = [];
+    const suggestions = [];
+    recent.forEach(r => {
+      const hasReact = (r.frontend || []).some(f => f && f.toLowerCase().includes('react'));
+      const hasVue = (r.frontend || []).some(f => f && f.toLowerCase().includes('vue'));
+      const hasSvelte = (r.frontend || []).some(f => f && f.toLowerCase().includes('svelte'));
+      const hasTypeScript = (r.tools || []).some(t => t && t.toLowerCase().includes('typescript'));
+      const hasAI = (r.aiFrameworks || []).length > 0;
+      const hasVector = (r.database || []).some(d => d && (d.toLowerCase().includes('vector') || d.toLowerCase().includes('pinecone') || d.toLowerCase().includes('chroma')));
+      const hasRedis = (r.database || []).some(d => d && d.toLowerCase().includes('redis'));
+      const hasDocker = (r.tools || []).some(t => t && t.toLowerCase().includes('docker'));
+      const hasTesting = (r.tools || []).some(t => t && (t.toLowerCase().includes('jest') || t.toLowerCase().includes('pytest') || t.toLowerCase().includes('vitest')));
+
+      if ((hasReact || hasVue || hasSvelte) && !hasTypeScript) {
+        suggestions.push(`${r.projectName}: Add TypeScript for better type safety`);
+      }
+      if (hasAI && !hasVector) {
+        suggestions.push(`${r.projectName}: Consider vector database (Pinecone/Chroma) for AI features`);
+      }
+      if (hasAI && !hasRedis) {
+        suggestions.push(`${r.projectName}: Add Redis for AI response caching`);
+      }
+      if (!hasDocker && (r.backend || []).length > 0) {
+        suggestions.push(`${r.projectName}: Docker containerization recommended for backend`);
+      }
+      if (!hasTesting) {
+        suggestions.push(`${r.projectName}: Missing testing framework (Jest/Pytest)`);
+      }
+    });
+
+    // Enhanced compatibility warnings
+    const warnings = [];
+    recent.forEach(r => {
+      const hasNext = (r.frontend || []).some(f => f && f.toLowerCase().includes('next'));
+      const hasVite = (r.tools || []).some(t => t && t.toLowerCase().includes('vite'));
+      const hasFastAPI = (r.backend || []).some(b => b && b.toLowerCase().includes('fastapi'));
+      const hasExpress = (r.backend || []).some(b => b && (b.toLowerCase().includes('express') || b.toLowerCase().includes('node')));
+      const hasFlask = (r.backend || []).some(b => b && b.toLowerCase().includes('flask'));
+      const hasElectron = (r.frontend || []).some(f => f && f.toLowerCase().includes('electron'));
+      const hasReact = (r.frontend || []).some(f => f && f.toLowerCase().includes('react'));
+
+      if (hasNext && hasVite) {
+        warnings.push(`${r.projectName}: Next.js includes bundling - Vite may conflict`);
+      }
+      if (hasFastAPI && hasExpress) {
+        warnings.push(`${r.projectName}: Multiple backend frameworks may cause port conflicts`);
+      }
+      if (hasElectron && !hasReact && !hasVue && !hasSvelte) {
+        warnings.push(`${r.projectName}: Electron works best with modern frontend frameworks`);
+      }
+      if ((hasFastAPI || hasFlask) && hasExpress) {
+        warnings.push(`${r.projectName}: Mixing Python & Node.js backends increases complexity`);
+      }
+    });
+
+    // Enhanced performance tips with modern practices
+    const tips = [];
+    const frontendTechs = recent.flatMap(r => r.frontend || []);
+    const backendTechs = recent.flatMap(r => r.backend || []);
+    const aiTechs = recent.flatMap(r => r.aiFrameworks || []);
+    const dbTechs = recent.flatMap(r => r.database || []);
+    
+    if (frontendTechs.filter(f => f && f.toLowerCase().includes('react')).length >= 1) {
+      tips.push('React: Use React.memo, useMemo, and Suspense for better UX');
+    }
+    if (backendTechs.filter(b => b && b.toLowerCase().includes('fastapi')).length >= 1) {
+      tips.push('FastAPI: Implement async endpoints and Pydantic models for validation');
+    }
+    if (backendTechs.filter(b => b && b.toLowerCase().includes('express')).length >= 1) {
+      tips.push('Express: Add compression middleware and implement rate limiting');
+    }
+    if (aiTechs.length > 0) {
+      tips.push('AI Projects: Use streaming responses and implement token budgeting');
+    }
+    if (frontendTechs.some(f => f && f.toLowerCase().includes('vue'))) {
+      tips.push('Vue: Leverage composition API and computed properties for reactivity');
+    }
+    if (frontendTechs.some(f => f && f.toLowerCase().includes('svelte'))) {
+      tips.push('Svelte: Use stores for state management and optimize bundle size');
+    }
+    if (dbTechs.some(d => d && d.toLowerCase().includes('postgres'))) {
+      tips.push('PostgreSQL: Index frequently queried columns and use connection pooling');
+    }
+
+    // Security recommendations
+    const security = [];
+    recent.forEach(r => {
+      const hasAuth = (r.tools || []).some(t => t && (t.toLowerCase().includes('auth') || t.toLowerCase().includes('jwt')));
+      const hasHTTPS = (r.tools || []).some(t => t && t.toLowerCase().includes('ssl'));
+      const hasValidation = (r.tools || []).some(t => t && (t.toLowerCase().includes('joi') || t.toLowerCase().includes('yup') || t.toLowerCase().includes('zod')));
+      
+      if (!hasAuth && (r.backend || []).length > 0) {
+        security.push(`${r.projectName}: Implement authentication (JWT/OAuth)`);
+      }
+      if (!hasValidation && (r.backend || []).length > 0) {
+        security.push(`${r.projectName}: Add input validation library (Zod/Joi)`);
+      }
+    });
+
+    return {
+      popularCombos,
+      topTemplates,
+      techTrends,
+      suggestions: suggestions.slice(0, 4),
+      warnings: warnings.slice(0, 3),
+      tips: tips.slice(0, 4),
+      security: security.slice(0, 2)
+    };
+  }, [recent]);
+
   // --- Heuristic NLP analyzer (simple keyword rules) ---
   function analyzeNlp(text){
     const original = text.trim();
@@ -342,7 +515,104 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             </div>
           )}
         </section>
-        <section className="panel news-panel" aria-labelledby="news-head">
+        <section className="panel insights-panel" aria-labelledby="insights-head">
+          <div className="panel-header"><h2 id="insights-head">Stack Insights</h2></div>
+          <ul className="news-list">
+            {!stackInsights && <li className="placeholder">Generate more projects to see insights</li>}
+            
+            {/* Popular Stack Combinations */}
+            {stackInsights && stackInsights.popularCombos.length > 0 && 
+              stackInsights.popularCombos.map((combo, i) => (
+                <li key={`combo-${i}`} className="news-item">
+                  <div className="news-tag">Stack</div>
+                  <div className="news-body">
+                    <div className="news-title">{combo.combo}</div>
+                    <div className="news-date">{combo.percentage}% usage ({combo.count} projects)</div>
+                  </div>
+                </li>
+              ))
+            }
+
+            {/* Top Templates */}
+            {stackInsights && stackInsights.topTemplates && stackInsights.topTemplates.length > 0 && 
+              stackInsights.topTemplates.map((template, i) => (
+                <li key={`template-${i}`} className="news-item">
+                  <div className="news-tag" style={{background: '#9C27B0'}}>📋 Template</div>
+                  <div className="news-body">
+                    <div className="news-title">{template.template}</div>
+                    <div className="news-date">Used in {template.percentage}% of projects</div>
+                  </div>
+                </li>
+              ))
+            }
+
+            {/* Technology Trends */}
+            {stackInsights && stackInsights.techTrends && stackInsights.techTrends.length > 0 && 
+              stackInsights.techTrends.map((trend, i) => (
+                <li key={`trend-${i}`} className="news-item">
+                  <div className="news-tag" style={{background: '#673AB7'}}>📈 Trend</div>
+                  <div className="news-body">
+                    <div className="news-title">{trend}</div>
+                    <div className="news-date">Development Pattern</div>
+                  </div>
+                </li>
+              ))
+            }
+
+            {/* Enhancement Suggestions */}
+            {stackInsights && stackInsights.suggestions && stackInsights.suggestions.length > 0 && 
+              stackInsights.suggestions.map((suggestion, i) => (
+                <li key={`suggestion-${i}`} className="news-item">
+                  <div className="news-tag" style={{background: '#2196F3'}}>💡 Enhance</div>
+                  <div className="news-body">
+                    <div className="news-title">{suggestion}</div>
+                    <div className="news-date">Recommended Addition</div>
+                  </div>
+                </li>
+              ))
+            }
+
+            {/* Compatibility Warnings */}
+            {stackInsights && stackInsights.warnings && stackInsights.warnings.length > 0 && 
+              stackInsights.warnings.map((warning, i) => (
+                <li key={`warning-${i}`} className="news-item">
+                  <div className="news-tag" style={{background: '#FF9800'}}>⚠️ Alert</div>
+                  <div className="news-body">
+                    <div className="news-title">{warning}</div>
+                    <div className="news-date">Potential Conflict</div>
+                  </div>
+                </li>
+              ))
+            }
+
+            {/* Performance Tips */}
+            {stackInsights && stackInsights.tips && stackInsights.tips.length > 0 && 
+              stackInsights.tips.map((tip, i) => (
+                <li key={`tip-${i}`} className="news-item">
+                  <div className="news-tag" style={{background: '#4CAF50'}}>🚀 Optimize</div>
+                  <div className="news-body">
+                    <div className="news-title">{tip}</div>
+                    <div className="news-date">Performance Boost</div>
+                  </div>
+                </li>
+              ))
+            }
+
+            {/* Security Recommendations */}
+            {stackInsights && stackInsights.security && stackInsights.security.length > 0 && 
+              stackInsights.security.map((sec, i) => (
+                <li key={`security-${i}`} className="news-item">
+                  <div className="news-tag" style={{background: '#E91E63'}}>🔒 Security</div>
+                  <div className="news-body">
+                    <div className="news-title">{sec}</div>
+                    <div className="news-date">Security Enhancement</div>
+                  </div>
+                </li>
+              ))
+            }
+          </ul>
+        </section>
+        {/* <section className="panel news-panel" aria-labelledby="news-head">
           <div className="panel-header"><h2 id="news-head">Trends & Updates</h2></div>
           <ul className="news-list">
             {loadingNews && <li className="placeholder">Loading feed...</li>}
@@ -356,7 +626,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
               </li>
             ))}
           </ul>
-        </section>
+        </section> */}
         </div>
 
       </div>
