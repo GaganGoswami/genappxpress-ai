@@ -20,10 +20,12 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
     setLoadingNews(true);
     const timer = setTimeout(() => {
       setNews([
-        { id: 't1', title: 'New in 2025: AI Code Assistants Embed Protocol Tools', tag: 'AI', date: '2025-08-21' },
-        { id: 't2', title: 'Edge Functions becoming default for micro-backends', tag: 'Edge', date: '2025-08-19' },
-        { id: 't3', title: 'RAG patterns stabilize around hybrid retrieval strategies', tag: 'RAG', date: '2025-08-15' },
-        { id: 't4', title: 'Multi-agent workflow orchestration frameworks converge', tag: 'Agents', date: '2025-08-10' }
+        { id: 't1', title: 'Vector databases reach production maturity: Pinecone, Chroma lead adoption', tag: 'Vector DB', date: '2025-09-01' },
+        { id: 't2', title: 'RAG architectures standardize on hybrid search with vector + keyword', tag: 'RAG', date: '2025-08-28' },
+        { id: 't3', title: 'ChromaDB and Qdrant gain traction for local-first AI applications', tag: 'Local-First', date: '2025-08-25' },
+        { id: 't4', title: 'Embedding models optimize for semantic chunking strategies', tag: 'Embeddings', date: '2025-08-20' },
+        { id: 't5', title: 'Multi-agent workflow orchestration frameworks converge', tag: 'Agents', date: '2025-08-15' },
+        { id: 't6', title: 'Edge Functions becoming default for micro-backends', tag: 'Edge', date: '2025-08-10' }
       ]);
       setLoadingNews(false);
     }, 650);
@@ -35,10 +37,12 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
       const raw = JSON.parse(localStorage.getItem('genappxpress-history') || '[]');
       if (raw.length === 0) {
         setRecent([
-          {id:'p1',projectName:'AI Chatbot',date:'2025-09-01',type:'Web App',frontend:['React'],backend:['Node.js'],aiFrameworks:['LangChain'],templates:['ai-chatbot','web-research']},
-          {id:'p2',projectName:'RAG Service',date:'2025-08-28',type:'Service',frontend:['Vue'],backend:['FastAPI'],aiFrameworks:['Haystack'],templates:['rag-service','process-automator']},
-          {id:'p3',projectName:'Process Automator',date:'2025-08-20',type:'Automation',frontend:['Svelte'],backend:['Flask'],aiFrameworks:['OpenAI'],templates:['process-automator','code-assistant']},
-          {id:'p4',projectName:'Local-first App',date:'2025-08-10',type:'Desktop',frontend:['Electron'],backend:['Express'],aiFrameworks:['None'],templates:['local-first-app']},
+          {id:'p1',projectName:'PDF Chat Assistant',date:'2025-09-01',type:'RAG App',frontend:['React'],backend:['FastAPI'],database:['ChromaDB'],aiFrameworks:['LangChain'],llmProviders:['OpenAI'],templates:['pdf-chat','rag-service']},
+          {id:'p2',projectName:'Knowledge Base Portal',date:'2025-08-28',type:'Knowledge System',frontend:['Vue'],backend:['FastAPI'],database:['Weaviate','PostgreSQL'],aiFrameworks:['LangChain'],llmProviders:['OpenAI'],templates:['knowledge-base','vector-ingest']},
+          {id:'p3',projectName:'Vector Ingest Pipeline',date:'2025-08-25',type:'Data Pipeline',backend:['FastAPI'],database:['Pinecone'],aiFrameworks:['LangChain'],llmProviders:['OpenAI'],templates:['vector-ingest','rag-service']},
+          {id:'p4',projectName:'AI Chatbot',date:'2025-08-20',type:'Web App',frontend:['React'],backend:['Node.js'],database:['Redis'],aiFrameworks:['LangChain'],llmProviders:['OpenAI'],templates:['ai-chatbot','web-research']},
+          {id:'p5',projectName:'RAG API Service',date:'2025-08-15',type:'Microservice',backend:['FastAPI'],database:['Qdrant'],aiFrameworks:['LangChain'],llmProviders:['OpenAI'],templates:['rag-service','multimodal-assistant']},
+          {id:'p6',projectName:'Local-first RAG',date:'2025-08-10',type:'Desktop',frontend:['Electron'],backend:['Express'],database:['ChromaDB'],aiFrameworks:['LangChain'],llmProviders:['Ollama'],templates:['local-first','rag-service']},
         ]);
       } else {
         setRecent(raw.slice(-10).reverse());
