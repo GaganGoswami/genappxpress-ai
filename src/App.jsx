@@ -296,6 +296,7 @@ export default function App() {
       </header>
       {view==='dashboard' ? (
         <Dashboard
+          darkMode={darkMode}
           onOpenProject={(p)=>{
             setProjectName(p.projectName);
             const restored = {frontend:p.frontend||[], backend:p.backend||[], database:p.database||[], tools:p.tools||[], aiFrameworks:p.aiFrameworks||[], llmProviders:p.llmProviders||[], protocols:p.protocols||[]};

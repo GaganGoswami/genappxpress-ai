@@ -6,7 +6,7 @@ import { TECH_STACK } from '../data/techData';
  * Dashboard component: central hub showing recent projects, template recommendations,
  * productivity metrics, and a trends/news feed.
  */
-export default function Dashboard({ onOpenProject, onSelectTemplate }) {
+export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode }) {
   const [recent, setRecent] = useState([]);
   const [news, setNews] = useState([]);
   const [loadingNews, setLoadingNews] = useState(false);
@@ -427,9 +427,48 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
           <section className="panel metrics-panel" aria-labelledby="metrics-head">
             <div className="panel-header"><h2 id="metrics-head">Productivity Matrix 📈</h2></div>
             <div className="metrics-summary">
-              <div><strong>{metrics.total}</strong><span>Projects</span></div>
-              <div><strong>{metrics.hoursSaved}</strong><span>Hours Saved*</span></div>
-              <div><strong>{metrics.distinctTemplates}</strong><span>Templates Used</span></div>
+              <div style={{
+                background: darkMode 
+                  ? 'linear-gradient(135deg, #2f959eff 0%, #269986ff 100%)' 
+                  : 'linear-gradient(135deg, #2e9090ff 0%, #15697eff 100%)', 
+                color: 'white', 
+                borderRadius: '12px', 
+                padding: '16px', 
+                boxShadow: darkMode 
+                  ? '0 2px 8px rgba(45, 55, 72, 0.3)' 
+                  : '0 2px 8px rgba(203, 213, 224, 0.4)',
+                border: darkMode ? '1px solid #4a5568' : '1px solid #e2e8f0'
+              }}>
+                <strong>{metrics.total}</strong><span>Projects</span>
+              </div>
+              <div style={{
+                background: darkMode 
+                  ? 'linear-gradient(135deg, #2f959eff 0%, #269986ff 100%)' 
+                  : 'linear-gradient(135deg, #2e9090ff 0%, #15697eff 100%)', 
+                color: 'white', 
+                borderRadius: '12px', 
+                padding: '16px', 
+                boxShadow: darkMode 
+                  ? '0 2px 8px rgba(43, 108, 176, 0.4)' 
+                  : '0 2px 8px rgba(49, 130, 206, 0.3)',
+                border: darkMode ? '1px solid #3182ce' : 'none'
+              }}>
+                <strong>{metrics.hoursSaved}</strong><span>Hours Saved*</span>
+              </div>
+              <div style={{
+                background: darkMode 
+                  ? 'linear-gradient(135deg, #2f959eff 0%, #269986ff 100%)' 
+                  : 'linear-gradient(135deg, #2e9090ff 0%, #15697eff 100%)', 
+                color: 'white', 
+                borderRadius: '12px', 
+                padding: '16px', 
+                boxShadow: darkMode 
+                  ? '0 2px 8px rgba(4, 120, 87, 0.4)' 
+                  : '0 2px 8px rgba(16, 185, 129, 0.3)',
+                border: darkMode ? '1px solid #10b981' : 'none'
+              }}>
+                <strong>{metrics.distinctTemplates}</strong><span>Templates Used</span>
+              </div>
             </div>
             <div className="chart-row column">
               <div className="mini-chart" aria-label="Template usage pie chart">
@@ -451,7 +490,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
                       <XAxis dataKey="name" hide />
                       <YAxis hide />
                       <Tooltip />
-                      <Bar dataKey="v" fill="#21808d" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="v" fill="#21808d" radius={[3, 3, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : <div className="placeholder" style={{ height: 180 }}>No activity yet.</div>}
