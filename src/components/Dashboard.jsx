@@ -71,9 +71,65 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
     } catch (e) { /* ignore */ }
   };
 
-  const handleExport = (project) => {
-    alert(`Exporting project: ${project.projectName}`);
-    // TODO: Implement actual export logic
+  const handleExport = async (project) => {
+    try {
+      // Import required modules dynamically
+      const JSZip = (await import('jszip')).default;
+      const { saveAs } = await import('file-saver');
+      const { generateScript, generateStructure } = await import('../data/techData');
+      
+      const zip = new JSZip();
+      
+      // Normalize project data to match expected config format
+      const cfg = {
+        projectName: project.projectName,
+        description: project.description || `${project.projectName} - Exported from GenAppXpress Dashboard`,
+        author: project.author || '',
+        license: project.license || 'MIT',
+        frontend: project.frontend || [],
+        backend: project.backend || [],
+        database: project.database || [],
+        tools: project.tools || [],
+        aiFrameworks: project.aiFrameworks || [],
+        llmProviders: project.llmProviders || [],
+        protocols: project.protocols || [],
+        templates: project.templates || []
+      };
+      
+      // Generate setup script and project structure
+      const setupScript = generateScript(cfg);
+      const structure = generateStructure(cfg);
+      
+      // Add core files to ZIP
+      zip.file('setup.sh', setupScript);
+      zip.file('project.json', JSON.stringify(cfg, null, 2));
+      zip.file('README.md', `# ${cfg.projectName}\n\n${cfg.description}\n\nExported from GenAppXpress Dashboard on ${new Date().toLocaleDateString()}\n\n## Quick Start\n\n1. Run \`bash setup.sh\` to install dependencies\n2. Add your API keys to \`.env\` file\n3. Follow the generated project structure\n\n## Templates Used\n${cfg.templates.length > 0 ? cfg.templates.map(t => `- ${t}`).join('\n') : 'None'}\n\n## Tech Stack\n\n**Frontend:** ${cfg.frontend.join(', ') || 'None'}\n**Backend:** ${cfg.backend.join(', ') || 'None'}\n**Database:** ${cfg.database.join(', ') || 'None'}\n**AI Frameworks:** ${cfg.aiFrameworks.join(', ') || 'None'}\n**LLM Providers:** ${cfg.llmProviders.join(', ') || 'None'}`);
+      
+      // Recursively add generated project structure
+      function addStructureToZip(node, pathParts = []) {
+        Object.entries(node || {}).forEach(([name, val]) => {
+          if (val === undefined) return;
+          const newParts = pathParts.concat([name]);
+          const relPath = newParts.join('/');
+          
+          if (typeof val === 'string') {
+            zip.file(relPath, val);
+          } else if (val && typeof val === 'object') {
+            addStructureToZip(val, newParts);
+          }
+        });
+      }
+      
+      addStructureToZip(structure, []);
+      
+      // Generate and download ZIP
+      const content = await zip.generateAsync({ type: 'blob' });
+      saveAs(content, `${cfg.projectName}-export.zip`);
+      
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert(`Export failed: ${error.message}`);
+    }
   };
 
   const metrics = useMemo(() => {
