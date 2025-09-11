@@ -155,6 +155,9 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
   const templateData = Object.entries(metrics.templateUsageCount || {}).map(([name, count]) => ({ name, value: count }));
   const pieColors = ['#21808d', '#2da6b2', '#2996a1', '#32b8c6', '#1a6873', '#13343b'];
 
+  // Template usage data for the gallery
+  const templateUsage = metrics.templateUsageCount || {};
+
   const recommended = useMemo(() => {
     const used = new Set(templateData.map(d => d.name));
     const all = (TECH_STACK.templates || []).map(t => t.id);
@@ -710,34 +713,95 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
             </div>
             
             <div className="template-gallery-container">
-              {/* Group templates by category */}
-              {(() => {
-                const groups = (TECH_STACK.templates || []).reduce((acc, t) => {
-                  const cat = t.category || 'Other';
-                  acc[cat] = acc[cat] || [];
-                  acc[cat].push(t);
-                  return acc;
-                }, {});
-                const ordered = Object.keys(groups).sort();
-                return ordered.map(cat => (
-                  <div key={cat} className="template-group" aria-label={cat+ ' templates'}>
-                    <div className="subhead" style={{marginTop: ordered[0]===cat?0:12}}>{cat}</div>
-                    <div className="gallery small">
-                      {groups[cat].map(t => (
-                        <button key={t.id} className="template-chip" title={t.description} onClick={() => handleTemplateUsage(t)}>{t.name}</button>
-                      ))}
+              {/* Compact Template Cards */}
+              <div className="template-cards-grid">
+                {(TECH_STACK.templates || []).map(template => {
+                  const usageCount = templateUsage[template.id] || 0;
+                  const technologies = template.stack ? Object.values(template.stack).flat().filter(tech => tech) : [];
+                  
+                  return (
+                    <div key={template.id} className="template-card">
+                      <div className="template-card-header">
+                        <div className="template-icon">
+                          {getTemplateIcon(template.id)}
+                        </div>
+                        <div className="usage-counter">
+                          {usageCount}
+                        </div>
+                      </div>
+                      
+                      <div className="template-card-content">
+                        <h3 className="template-title">{template.name}</h3>
+                        <p className="template-description">{template.description}</p>
+                        
+                        <div className="template-tags">
+                          {technologies.slice(0, 2).map(tech => (
+                            <span key={tech} className="template-tag">{tech}</span>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <button 
+                        className="use-template-btn"
+                        onClick={() => handleTemplateUsage(template)}
+                        title={template.description}
+                      >
+                        Use Template
+                      </button>
                     </div>
-                  </div>
-                ));
-              })()}
+                  );
+                })}
+              </div>
               
               {/* Recommended Templates Section */}
-              {recommended.length > 0 && <div className="recommended" style={{marginTop:16}}>
-                <div className="subhead">Recommended (unused)</div>
-                <div className="gallery small">
-                  {recommended.map(r => <span key={r} className="template-chip alt">{r}</span>)}
+              {recommended.length > 0 && (
+                <div className="recommended-section">
+                  <div className="subhead" style={{ marginTop: 20, marginBottom: 12 }}>
+                    📋 RAG / Retrieval ({recommended.length})
+                  </div>
+                  <p className="recommended-description">Templates for various development needs</p>
+                  
+                  <div className="template-cards-grid">
+                    {recommended.map(templateId => {
+                      const template = (TECH_STACK.templates || []).find(t => t.id === templateId);
+                      const usageCount = templateUsage[templateId] || 0;
+                      const technologies = template?.stack ? Object.values(template.stack).flat().filter(tech => tech) : [];
+                      
+                      return template ? (
+                        <div key={templateId} className="template-card">
+                          <div className="template-card-header">
+                            <div className="template-icon">
+                              {getTemplateIcon(templateId)}
+                            </div>
+                            <div className="usage-counter">
+                              {usageCount}
+                            </div>
+                          </div>
+                          
+                          <div className="template-card-content">
+                            <h3 className="template-title">{template.name}</h3>
+                            <p className="template-description">{template.description}</p>
+                            
+                            <div className="template-tags">
+                              {technologies.slice(0, 2).map(tech => (
+                                <span key={tech} className="template-tag">{tech}</span>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <button 
+                            className="use-template-btn"
+                            onClick={() => handleTemplateUsage(template)}
+                            title={template.description}
+                          >
+                            Use Template
+                          </button>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
                 </div>
-              </div>}
+              )}
             </div>
           </section>
         </div>
