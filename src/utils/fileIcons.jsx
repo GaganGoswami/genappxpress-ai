@@ -1,92 +1,65 @@
 import React from 'react';
-// Using VS Code Icons set from react-icons for file type recognition
-import { 
-  VscFile, 
-  VscFileCode, 
-  VscJson, 
-  VscMarkdown,
-  VscSymbolClass,
-  VscSymbolMethod,
-  VscDatabase,
-  VscGear,
-  VscPackage,
-  VscTextSize,
-  VscBrowser,
-  VscTerminal,
-  VscLock,
-  VscGitIgnore,
-  VscRocket
-} from 'react-icons/vsc';
-import { 
-  FaFolder, 
-  FaFolderOpen,
-  FaReact, 
-  FaNodeJs, 
-  FaPython,
-  FaJs,
-  FaCss3,
-  FaHtml5,
-  FaDocker,
-  FaGithub
-} from 'react-icons/fa';
-import { 
-  SiTypescript,
-  SiTailwindcss,
-  SiVite,
-  SiExpress,
-  SiFastapi,
-  SiPostgresql,
-  SiMongodb,
-  SiRedis,
-  SiSupabase,
-  SiNextdotjs,
-  SiNuxtdotjs,
-  SiSvelte,
-  SiVuedotjs,
-  SiAngular,
-  SiDjango,
-  SiFlask,
-  SiNestjs,
-  SiSpringboot,
-  SiRubyonrails,
-  SiPhp,
-  SiGo,
-  SiRust,
-  SiDotnet
-} from 'react-icons/si';
+// Replaced react-icons with simple emoji/text alternatives for better performance
+// Simple emoji/text icons to replace react-icons
+const FileIcons = {
+  // Folders
+  folder: '📁',
+  folderOpen: '📂',
+  
+  // File types
+  file: '📄',
+  code: '💻',
+  json: '🔗',
+  markdown: '📝',
+  html: '🌐',
+  css: '🎨',
+  js: '🟨',
+  ts: '🔷',
+  jsx: '⚛️',
+  tsx: '⚛️',
+  py: '🐍',
+  docker: '🐳',
+  git: '📁',
+  config: '⚙️',
+  package: '📦',
+  database: '🗄️',
+  terminal: '💻',
+  lock: '🔒',
+  rocket: '🚀'
+};
 
 /**
- * Get the appropriate icon component for a file based on its extension and name
+ * Get the appropriate icon for a file based on its extension and name
  * @param {string} fileName - The name of the file
  * @param {boolean} isDirectory - Whether this is a directory
  * @param {boolean} isOpen - Whether directory is open (for folder icons)
- * @returns {React.Component} Icon component
+ * @returns {string} Emoji icon
  */
 export function getFileIcon(fileName, isDirectory = false, isOpen = false) {
   if (isDirectory) {
-    return getFolderIcon(fileName, isOpen);
+    return isOpen ? FileIcons.folderOpen : FileIcons.folder;
   }
   
   const extension = fileName.split('.').pop()?.toLowerCase() || '';
   const baseName = fileName.toLowerCase();
   
   // Special files by name
-  if (baseName === 'package.json') return <VscPackage className="file-icon" />;
-  if (baseName === 'readme.md' || baseName === 'readme.txt') return <VscMarkdown className="file-icon" />;
-  if (baseName === 'dockerfile') return <FaDocker className="file-icon" />;
-  if (baseName === 'docker-compose.yml' || baseName === 'docker-compose.yaml') return <FaDocker className="file-icon" />;
-  if (baseName === '.env' || baseName.startsWith('.env.')) return <VscLock className="file-icon" />;
-  if (baseName === '.gitignore') return <VscGitIgnore className="file-icon" />;
-  if (baseName === 'vite.config.js' || baseName === 'vite.config.ts') return <SiVite className="file-icon" />;
-  if (baseName === 'next.config.js' || baseName === 'next.config.ts') return <SiNextdotjs className="file-icon" />;
-  if (baseName === 'setup.sh' || baseName.endsWith('.sh')) return <VscTerminal className="file-icon" />;
-  if (baseName === 'requirements.txt') return <FaPython className="file-icon" />;
-  if (baseName === 'yarn.lock' || baseName === 'package-lock.json') return <VscLock className="file-icon" />;
-  if (baseName === 'index.html') return <FaHtml5 className="file-icon" />;
-  if (baseName === 'tsconfig.json') return <SiTypescript className="file-icon" />;
-  if (baseName === '.eslintrc.js' || baseName === '.eslintrc.cjs' || baseName === '.eslintrc.json') return <VscGear className="file-icon" />;
-  if (baseName === 'server.js' || baseName === 'main.py') return <VscTerminal className="file-icon" />;
-  if (baseName === 'schema.sql') return <VscDatabase className="file-icon" />;
+  if (baseName === 'package.json') return FileIcons.package;
+  if (baseName === 'readme.md' || baseName === 'readme.txt') return FileIcons.markdown;
+  if (baseName === 'dockerfile') return FileIcons.docker;
+  if (baseName === 'docker-compose.yml' || baseName === 'docker-compose.yaml') return FileIcons.docker;
+  if (baseName === '.env' || baseName.startsWith('.env.')) return FileIcons.lock;
+  if (baseName === '.gitignore') return FileIcons.git;
+  if (baseName === 'vite.config.js' || baseName === 'vite.config.ts') return FileIcons.config;
+  if (baseName === 'next.config.js' || baseName === 'next.config.ts') return FileIcons.config;
+  if (baseName === 'setup.sh' || baseName.endsWith('.sh')) return FileIcons.terminal;
+  if (baseName === 'requirements.txt') return FileIcons.py;
+  if (baseName === 'yarn.lock' || baseName === 'package-lock.json') return FileIcons.lock;
+  if (baseName === 'index.html') return FileIcons.html;
+  if (baseName === 'tsconfig.json') return FileIcons.ts;
+  if (baseName === '.eslintrc.js' || baseName === '.eslintrc.cjs' || baseName === '.eslintrc.json') return FileIcons.config;
+  if (baseName === 'server.js' || baseName === 'main.py') return FileIcons.terminal;
+  if (baseName === 'schema.sql') return FileIcons.database;
   
   // Extensions
   switch (extension) {

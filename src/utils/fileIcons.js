@@ -1,143 +1,117 @@
 import React from 'react';
-// Using VS Code Icons set from react-icons for file type recognition
-import { 
-	VscFile, 
-	VscFileCode, 
-	VscJson, 
-	VscMarkdown,
-	VscSymbolClass,
-	VscSymbolMethod,
-	VscDatabase,
-	VscGear,
-	VscPackage,
-	VscTextSize,
-	VscBrowser,
-	VscTerminal,
-	VscLock,
-	VscRocket
-} from 'react-icons/vsc';
-import { 
-	FaFolder, 
-	FaFolderOpen,
-	FaReact, 
-	FaNodeJs, 
-	FaPython,
-	FaJs,
-	FaCss3,
-	FaHtml5,
-	FaDocker,
-	FaGithub
-} from 'react-icons/fa';
-import { 
-	SiTypescript,
-	SiTailwindcss,
-	SiVite,
-	SiExpress,
-	SiFastapi,
-	SiPostgresql,
-	SiMongodb,
-	SiRedis,
-	SiSupabase,
-	SiNextdotjs,
-	SiNuxtdotjs,
-	SiSvelte,
-	SiVuedotjs,
-	SiAngular,
-	SiDjango,
-	SiFlask,
-	SiNestjs,
-	SiSpringboot,
-	SiRubyonrails,
-	SiPhp,
-	SiGo,
-	SiRust,
-	SiDotnet
-} from 'react-icons/si';
+// Replaced react-icons with simple emoji/text alternatives for better performance
+// Simple emoji/text icons to replace react-icons
+const FileIcons = {
+  // Folders
+  folder: '📁',
+  folderOpen: '📂',
+  
+  // File types
+  file: '📄',
+  code: '💻',
+  json: '🔗',
+  markdown: '📝',
+  html: '🌐',
+  css: '🎨',
+  js: '🟨',
+  ts: '🔷',
+  jsx: '⚛️',
+  tsx: '⚛️',
+  py: '🐍',
+  docker: '🐳',
+  git: '📁',
+  config: '⚙️',
+  package: '📦',
+  database: '🗄️',
+  terminal: '💻',
+  lock: '🔒',
+  rocket: '🚀'
+};
 
 /**
- * Get the appropriate icon component for a file based on its extension and name
+ * Get the appropriate icon for a file based on its extension and name
  * @param {string} fileName - The name of the file
  * @param {boolean} isDirectory - Whether this is a directory
  * @param {boolean} isOpen - Whether directory is open (for folder icons)
- * @returns {React.Component} Icon component
+ * @returns {string} Emoji icon
  */
 export function getFileIcon(fileName, isDirectory = false, isOpen = false) {
 	if (isDirectory) {
-		return getFolderIcon(fileName, isOpen);
+		return isOpen ? FileIcons.folderOpen : FileIcons.folder;
 	}
   
 	const extension = fileName.split('.').pop()?.toLowerCase() || '';
 	const baseName = fileName.toLowerCase();
   
 	// Special files by name
-	if (baseName === 'package.json') return React.createElement(VscPackage, { className: "file-icon" });
-	if (baseName === 'readme.md' || baseName === 'readme.txt') return React.createElement(VscMarkdown, { className: "file-icon" });
-	if (baseName === 'dockerfile') return React.createElement(FaDocker, { className: "file-icon" });
-	if (baseName === 'docker-compose.yml' || baseName === 'docker-compose.yaml') return React.createElement(FaDocker, { className: "file-icon" });
-	if (baseName === '.env' || baseName.startsWith('.env.')) return React.createElement(VscLock, { className: "file-icon" });
-	if (baseName === '.gitignore') return React.createElement(FaGithub, { className: "file-icon" });
-	if (baseName === 'vite.config.js' || baseName === 'vite.config.ts') return React.createElement(SiVite, { className: "file-icon" });
-	if (baseName === 'next.config.js' || baseName === 'next.config.ts') return React.createElement(SiNextdotjs, { className: "file-icon" });
-	if (baseName === 'setup.sh' || baseName.endsWith('.sh')) return React.createElement(VscTerminal, { className: "file-icon" });
-	if (baseName === 'requirements.txt') return React.createElement(FaPython, { className: "file-icon" });
-	if (baseName === 'yarn.lock' || baseName === 'package-lock.json') return React.createElement(VscLock, { className: "file-icon" });
-	if (baseName === 'index.html') return React.createElement(FaHtml5, { className: "file-icon" });
-	if (baseName === 'tsconfig.json') return React.createElement(SiTypescript, { className: "file-icon" });
-	if (baseName === '.eslintrc.js' || baseName === '.eslintrc.cjs' || baseName === '.eslintrc.json') return React.createElement(VscGear, { className: "file-icon" });
-	if (baseName === 'server.js' || baseName === 'main.py') return React.createElement(VscTerminal, { className: "file-icon" });
-	if (baseName === 'schema.sql') return React.createElement(VscDatabase, { className: "file-icon" });
+	if (baseName === 'package.json') return FileIcons.package;
+	if (baseName === 'readme.md' || baseName === 'readme.txt') return FileIcons.markdown;
+	if (baseName === 'dockerfile') return FileIcons.docker;
+	if (baseName === 'docker-compose.yml' || baseName === 'docker-compose.yaml') return FileIcons.docker;
+	if (baseName === '.env' || baseName.startsWith('.env.')) return FileIcons.lock;
+	if (baseName === '.gitignore') return FileIcons.git;
+	if (baseName === 'vite.config.js' || baseName === 'vite.config.ts') return FileIcons.config;
+	if (baseName === 'next.config.js' || baseName === 'next.config.ts') return FileIcons.config;
+	if (baseName === 'setup.sh' || baseName.endsWith('.sh')) return FileIcons.terminal;
+	if (baseName === 'requirements.txt') return FileIcons.py;
+	if (baseName === 'yarn.lock' || baseName === 'package-lock.json') return FileIcons.lock;
+	if (baseName === 'index.html') return FileIcons.html;
+	if (baseName === 'tsconfig.json') return FileIcons.ts;
+	if (baseName === '.eslintrc.js' || baseName === '.eslintrc.cjs' || baseName === '.eslintrc.json') return FileIcons.config;
+	if (baseName === 'server.js' || baseName === 'main.py') return FileIcons.terminal;
+	if (baseName === 'schema.sql') return FileIcons.database;
   
 	// Extensions
 	switch (extension) {
 		case 'js':
-			return React.createElement(FaJs, { className: "file-icon" });
+			return FileIcons.js;
 		case 'jsx':
-			return React.createElement(FaReact, { className: "file-icon" });
+			return FileIcons.jsx;
 		case 'ts':
-			return React.createElement(SiTypescript, { className: "file-icon" });
+			return FileIcons.ts;
 		case 'tsx':
-			return React.createElement(SiTypescript, { className: "file-icon" });
+			return FileIcons.tsx;
 		case 'py':
-			return React.createElement(FaPython, { className: "file-icon" });
+			return FileIcons.py;
 		case 'css':
-			return React.createElement(FaCss3, { className: "file-icon" });
+			return FileIcons.css;
 		case 'html':
-			return React.createElement(FaHtml5, { className: "file-icon" });
+			return FileIcons.html;
 		case 'json':
-			return React.createElement(VscJson, { className: "file-icon" });
+			return FileIcons.json;
 		case 'md':
-			return React.createElement(VscMarkdown, { className: "file-icon" });
+			return FileIcons.markdown;
 		case 'txt':
-			return React.createElement(VscTextSize, { className: "file-icon" });
+			return FileIcons.file;
 		case 'sql':
-			return React.createElement(VscDatabase, { className: "file-icon" });
+			return FileIcons.database;
 		case 'env':
-			return React.createElement(VscLock, { className: "file-icon" });
+			return FileIcons.lock;
 		case 'sh':
 		case 'bash':
 		case 'zsh':
-			return React.createElement(VscTerminal, { className: "file-icon" });
+			return FileIcons.terminal;
 		case 'yml':
 		case 'yaml':
-			return React.createElement(VscGear, { className: "file-icon" });
+			return FileIcons.config;
 		case 'toml':
-			return React.createElement(VscGear, { className: "file-icon" });
+			return FileIcons.config;
 		case 'xml':
-			return React.createElement(VscFileCode, { className: "file-icon" });
+			return FileIcons.code;
 		case 'php':
-			return React.createElement(SiPhp, { className: "file-icon" });
+			return '🐘';
 		case 'go':
-			return React.createElement(SiGo, { className: "file-icon" });
+			return '🐹';
 		case 'rs':
-			return React.createElement(SiRust, { className: "file-icon" });
+			return '🦀';
 		case 'java':
-			return React.createElement(VscSymbolClass, { className: "file-icon" });
+			return '☕';
 		case 'rb':
-			return React.createElement(VscSymbolMethod, { className: "file-icon" });
+			return '💎';
 		case 'cs':
-			return React.createElement(SiDotnet, { className: "file-icon" });
+			return '🔷';
 		default:
-			return React.createElement(VscFile, { className: "file-icon" });
+			return FileIcons.file;
 	}
 }
 
@@ -145,35 +119,35 @@ export function getFileIcon(fileName, isDirectory = false, isOpen = false) {
  * Get the appropriate folder icon based on folder name
  * @param {string} folderName - The name of the folder
  * @param {boolean} isOpen - Whether the folder is expanded
- * @returns {React.Component} Icon component
+ * @returns {string} Emoji icon
  */
 function getFolderIcon(folderName, isOpen = false) {
 	const name = folderName.toLowerCase().replace('/', '').trim();
   
 	// Special folder names
-	if (name === 'node_modules') return React.createElement(FaNodeJs, { className: "folder-icon" });
-	if (name === 'src' || name === 'source') return React.createElement(isOpen ? FaFolderOpen : FaFolder, { className: "folder-icon" });
-	if (name === 'components') return React.createElement(FaReact, { className: "folder-icon" });
-	if (name === 'pages') return React.createElement(VscBrowser, { className: "folder-icon" });
-	if (name === 'api' || name === 'server') return React.createElement(VscTerminal, { className: "folder-icon" });
-	if (name === 'styles' || name === 'css') return React.createElement(FaCss3, { className: "folder-icon" });
-	if (name === 'assets' || name === 'static' || name === 'public') return React.createElement(VscPackage, { className: "folder-icon" });
-	if (name === 'utils' || name === 'lib' || name === 'helpers') return React.createElement(VscGear, { className: "folder-icon" });
-	if (name === 'tests' || name === 'test' || name === '__tests__') return React.createElement(VscRocket, { className: "folder-icon" });
-	if (name === 'docs' || name === 'documentation') return React.createElement(VscMarkdown, { className: "folder-icon" });
-	if (name === 'config' || name === 'configuration') return React.createElement(VscGear, { className: "folder-icon" });
-	if (name === 'data') return React.createElement(VscDatabase, { className: "folder-icon" });
-	if (name === 'agents') return React.createElement(VscRocket, { className: "folder-icon" });
-	if (name === 'routes') return React.createElement(VscSymbolMethod, { className: "folder-icon" });
-	if (name === 'middleware') return React.createElement(VscSymbolClass, { className: "folder-icon" });
-	if (name === 'models') return React.createElement(VscDatabase, { className: "folder-icon" });
-	if (name === 'controllers') return React.createElement(VscSymbolClass, { className: "folder-icon" });
-	if (name === 'views' || name === 'templates') return React.createElement(VscBrowser, { className: "folder-icon" });
-	if (name === '.github') return React.createElement(FaGithub, { className: "folder-icon" });
-	if (name === '.vscode' || name === '.vs') return React.createElement(VscGear, { className: "folder-icon" });
+	if (name === 'node_modules') return '📦';
+	if (name === 'src' || name === 'source') return isOpen ? FileIcons.folderOpen : FileIcons.folder;
+	if (name === 'components') return '⚛️';
+	if (name === 'pages') return '📄';
+	if (name === 'api' || name === 'server') return '🖥️';
+	if (name === 'styles' || name === 'css') return '🎨';
+	if (name === 'assets' || name === 'static' || name === 'public') return '🗃️';
+	if (name === 'utils' || name === 'lib' || name === 'helpers') return '🔧';
+	if (name === 'tests' || name === 'test' || name === '__tests__') return '🧪';
+	if (name === 'docs' || name === 'documentation') return '📚';
+	if (name === 'config' || name === 'configuration') return '⚙️';
+	if (name === 'data') return '🗄️';
+	if (name === 'agents') return '🤖';
+	if (name === 'routes') return '🛣️';
+	if (name === 'middleware') return '🔗';
+	if (name === 'models') return '🗄️';
+	if (name === 'controllers') return '🎮';
+	if (name === 'views' || name === 'templates') return '🖼️';
+	if (name === '.github') return '🐙';
+	if (name === '.vscode' || name === '.vs') return '💙';
   
 	// Default folder icons
-	return React.createElement(isOpen ? FaFolderOpen : FaFolder, { className: "folder-icon" });
+	return isOpen ? FileIcons.folderOpen : FileIcons.folder;
 }
 
 /**

@@ -10,7 +10,7 @@ import FileTree from './components/FileTree';
 import EditorDiff from './components/EditorDiff';
 import ScriptPreview from './components/ScriptPreview';
 import { TECH_STACK, CATEGORY_LABELS, checkCompatibility, generateScript } from './data/techData';
-import { HiOutlineQuestionMarkCircle, HiOutlineSun, HiOutlineMoon, HiOutlineXMark } from 'react-icons/hi2';
+// Replaced react-icons with simple text/emoji alternatives
 
 const emptySelection = {frontend:[], backend:[], database:[], tools:[], aiFrameworks:[], llmProviders:[], protocols:[]};
 
@@ -290,10 +290,10 @@ export default function App() {
         }} aria-label="Go to Dashboard" style={{marginLeft:8}}>{view==='dashboard'?'✨ Scaffold Magic':'🏠 Dashboard'}</button>
         <button className="secondary" onClick={()=>setShowTemplates(true)}>📋 Templates</button>
         <button className="secondary" onClick={toggleTheme} aria-label="Toggle color theme">
-          {darkMode ? <HiOutlineSun size={18} /> : <HiOutlineMoon size={18} />}
+          {darkMode ? '☀️' : '🌙'}
         </button>
         <button className="secondary" onClick={()=>setShowHelp(true)} aria-label="Show usage/help"> 
-          <HiOutlineQuestionMarkCircle size={18} />
+          ❓
         </button>
       </header>
       {view==='dashboard' ? (
@@ -431,7 +431,7 @@ export default function App() {
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:24}}>
               <h2 style={helpHeadingStyle}>GenAppXpress Help & Guide</h2>
               <button onClick={()=>setShowHelp(false)} className="secondary" aria-label="Close Help" style={{alignSelf:'flex-start'}}>
-                <HiOutlineXMark size={18} />
+                ✕
               </button>
             </div>
             <p style={subtleTextStyle}>Version 0.1.0 · Rapid full‑stack + agentic AI project scaffolding. This guide summarizes how to use the dashboard & wizard effectively.</p>
@@ -508,7 +508,7 @@ export default function App() {
             <div style={{marginTop:32, fontSize:12, color: darkMode? '#5f8b8f':'#666'}}>Generated help content – refine or customize directly in <code style={codeStyle}>App.jsx</code>. Feedback welcomed.</div>
             <div style={{display:'flex', justifyContent:'flex-end', marginTop:16}}>
                <button onClick={()=>setShowHelp(false)} className="secondary" aria-label="Close Help" style={{alignSelf:'flex-start'}}>
-                <HiOutlineXMark size={18} />
+                ✕
               </button>
             </div>
           </div>
