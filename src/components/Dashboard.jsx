@@ -535,6 +535,44 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
     if (onSelectTemplate) onSelectTemplate(template);
   };
 
+  // Helper functions for template gallery enhancement
+  const getCategoryIcon = (category) => {
+    const icons = {
+      'AI & RAG': '🤖',
+      'Web Applications': '🌐', 
+      'API Services': '⚡',
+      'Data & Analytics': '📊',
+      'Automation': '🔄',
+      'Other': '📦'
+    };
+    return icons[category] || '📦';
+  };
+
+  const getCategoryDescription = (category) => {
+    const descriptions = {
+      'AI & RAG': 'Intelligent applications with AI frameworks and vector databases',
+      'Web Applications': 'Full-stack web applications with modern frameworks',
+      'API Services': 'Backend services and microservices architectures',
+      'Data & Analytics': 'Data processing, analysis, and visualization tools',
+      'Automation': 'Workflow automation and process optimization tools',
+      'Other': 'Specialized templates for unique use cases'
+    };
+    return descriptions[category] || 'Templates for various development needs';
+  };
+
+  const getTemplateIcon = (templateId) => {
+    const icons = {
+      'ai-chatbot': '💬', 'support-triage': '🎫', 'slack-bot': '💬',
+      'rag-service': '🔍', 'pdf-chat': '📄', 'vector-ingest': '📥',
+      'web-research': '🌐', 'process-automator': '⚙️', 'cron-agent': '⏰',
+      'workflow-designer': '🔄', 'agent-orchestrator': '🎭', 'code-assistant-mcp': '💻',
+      'evaluation-suite': '📝', 'analytics-dashboard': '📊', 'multimodal-assistant': '🎨',
+      'local-first': '💾', 'edge-functions': '⚡', 'email-assistant': '📧',
+      'jira-helper': '📋', 'knowledge-base': '📚'
+    };
+    return icons[templateId] || '🔧';
+  };
+
   return (
     <div className="dashboard-root" aria-label="Dashboard Home">
       <div className="dash-grid dash-grid-threecol">
@@ -655,33 +693,52 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
             <div className="fine-print">*Estimated time saved assuming ~80 min manual setup / project.</div>
           </section>
           <section className="panel templates-panel" aria-labelledby="templates-head">
-            <div className="panel-header"><h2 id="templates-head">Template Gallery 📋</h2></div>
-            {/* Group templates by category */}
-            {(() => {
-              const groups = (TECH_STACK.templates || []).reduce((acc, t) => {
-                const cat = t.category || 'Other';
-                acc[cat] = acc[cat] || [];
-                acc[cat].push(t);
-                return acc;
-              }, {});
-              const ordered = Object.keys(groups).sort();
-              return ordered.map(cat => (
-                <div key={cat} className="template-group" aria-label={cat+ ' templates'}>
-                  <div className="subhead" style={{marginTop: ordered[0]===cat?0:12}}>{cat}</div>
-                  <div className="gallery small">
-                    {groups[cat].map(t => (
-                      <button key={t.id} className="template-chip" title={t.description} onClick={() => handleTemplateUsage(t)}>{t.name}</button>
-                    ))}
-                  </div>
-                </div>
-              ));
-            })()}
-            {recommended.length > 0 && <div className="recommended" style={{marginTop:16}}>
-              <div className="subhead">Recommended (unused)</div>
-              <div className="gallery small">
-                {recommended.map(r => <span key={r} className="template-chip alt">{r}</span>)}
+            <div className="panel-header">
+              <h2 id="templates-head">Template Gallery 📋</h2>
+              <div className="template-stats">
+                <span className="stat-item">
+                  <strong>{(TECH_STACK.templates || []).length}</strong> Templates
+                </span>
+                <span className="stat-item">
+                  <strong>{Object.keys((TECH_STACK.templates || []).reduce((acc, t) => {
+                    const cat = t.category || 'Other';
+                    acc[cat] = true;
+                    return acc;
+                  }, {})).length}</strong> Categories
+                </span>
               </div>
-            </div>}
+            </div>
+            
+            <div className="template-gallery-container">
+              {/* Group templates by category */}
+              {(() => {
+                const groups = (TECH_STACK.templates || []).reduce((acc, t) => {
+                  const cat = t.category || 'Other';
+                  acc[cat] = acc[cat] || [];
+                  acc[cat].push(t);
+                  return acc;
+                }, {});
+                const ordered = Object.keys(groups).sort();
+                return ordered.map(cat => (
+                  <div key={cat} className="template-group" aria-label={cat+ ' templates'}>
+                    <div className="subhead" style={{marginTop: ordered[0]===cat?0:12}}>{cat}</div>
+                    <div className="gallery small">
+                      {groups[cat].map(t => (
+                        <button key={t.id} className="template-chip" title={t.description} onClick={() => handleTemplateUsage(t)}>{t.name}</button>
+                      ))}
+                    </div>
+                  </div>
+                ));
+              })()}
+              
+              {/* Recommended Templates Section */}
+              {recommended.length > 0 && <div className="recommended" style={{marginTop:16}}>
+                <div className="subhead">Recommended (unused)</div>
+                <div className="gallery small">
+                  {recommended.map(r => <span key={r} className="template-chip alt">{r}</span>)}
+                </div>
+              </div>}
+            </div>
           </section>
         </div>
         <div>
