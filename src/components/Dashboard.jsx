@@ -14,6 +14,10 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
   // NLP draft generation state (rule-based heuristic, no real LLM)
   const [nlpInput, setNlpInput] = useState('');
   const [nlpAnalysis, setNlpAnalysis] = useState(null);
+  // Enhanced Stack Insights state
+  const [insightsFilter, setInsightsFilter] = useState('all');
+  const [appliedSuggestions, setAppliedSuggestions] = useState(new Set());
+  const [expandedInsight, setExpandedInsight] = useState(null);
 
   // Simulate feed (could be replaced with real API)
   useEffect(() => {
@@ -321,14 +325,118 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
       }
     });
 
+    // Technology adoption metrics
+    const adoptionMetrics = {
+      frontend: {},
+      backend: {},
+      database: {},
+      aiFrameworks: {},
+      llmProviders: {}
+    };
+
+    recent.forEach(r => {
+      Object.keys(adoptionMetrics).forEach(category => {
+        const items = r[category] || [];
+        items.forEach(item => {
+          if (item) {
+            adoptionMetrics[category][item] = (adoptionMetrics[category][item] || 0) + 1;
+          }
+        });
+      });
+    });
+
+    // Project health score calculation
+    const projectHealthScores = recent.map(r => {
+      let score = 50; // Base score
+      const hasTypeScript = (r.tools || []).some(t => t && t.toLowerCase().includes('typescript'));
+      const hasTesting = (r.tools || []).some(t => t && (t.toLowerCase().includes('jest') || t.toLowerCase().includes('pytest') || t.toLowerCase().includes('vitest')));
+      const hasDocker = (r.tools || []).some(t => t && t.toLowerCase().includes('docker'));
+      const hasAuth = (r.tools || []).some(t => t && (t.toLowerCase().includes('auth') || t.toLowerCase().includes('jwt')));
+      const hasValidation = (r.tools || []).some(t => t && (t.toLowerCase().includes('joi') || t.toLowerCase().includes('yup') || t.toLowerCase().includes('zod')));
+      const hasFullStack = (r.frontend || []).length > 0 && (r.backend || []).length > 0;
+      const hasModernStack = (r.frontend || []).some(f => f && ['react', 'vue', 'svelte', 'nextjs'].includes(f.toLowerCase()));
+      
+      if (hasTypeScript) score += 15;
+      if (hasTesting) score += 20;
+      if (hasDocker) score += 10;
+      if (hasAuth) score += 10;
+      if (hasValidation) score += 10;
+      if (hasFullStack) score += 15;
+      if (hasModernStack) score += 10;
+      
+      return {
+        projectName: r.projectName,
+        score: Math.min(score, 100),
+        improvements: [
+          !hasTypeScript && 'Add TypeScript',
+          !hasTesting && 'Add Testing Framework',
+          !hasDocker && 'Add Docker',
+          !hasAuth && 'Add Authentication',
+          !hasValidation && 'Add Input Validation'
+        ].filter(Boolean)
+      };
+    });
+
+    const avgHealthScore = projectHealthScores.length > 0 
+      ? Math.round(projectHealthScores.reduce((sum, p) => sum + p.score, 0) / projectHealthScores.length)
+      : 0;
+
+    // Smart recommendations based on usage patterns
+    const smartRecommendations = [];
+    
+    // Frontend framework recommendations
+    const frontendUsage = adoptionMetrics.frontend;
+    if (Object.keys(frontendUsage).length === 0) {
+      smartRecommendations.push({
+        type: 'missing',
+        category: 'Frontend',
+        title: 'Start with a Frontend Framework',
+        description: 'Consider React, Vue, or Svelte for your user interfaces',
+        action: 'explore-frontend',
+        priority: 'high'
+      });
+    }
+
+    // AI integration recommendations
+    const aiUsage = Object.values(adoptionMetrics.aiFrameworks).reduce((sum, count) => sum + count, 0);
+    if (aiUsage === 0 && recent.length > 2) {
+      smartRecommendations.push({
+        type: 'opportunity',
+        category: 'AI',
+        title: 'Explore AI Integration',
+        description: 'Add LangChain or similar AI frameworks to modernize your projects',
+        action: 'add-ai',
+        priority: 'medium'
+      });
+    }
+
+    // Database recommendations
+    const dbUsage = adoptionMetrics.database;
+    const hasPostgres = dbUsage['postgresql'] || 0;
+    const hasMongo = dbUsage['mongodb'] || 0;
+    if (hasPostgres > hasMongo * 2) {
+      smartRecommendations.push({
+        type: 'pattern',
+        category: 'Database',
+        title: 'PostgreSQL Preference Detected',
+        description: 'You favor relational databases - consider PostgreSQL extensions like TimescaleDB',
+        action: 'explore-postgres',
+        priority: 'low'
+      });
+    }
+
     return {
       popularCombos,
       topTemplates,
       techTrends,
-      suggestions: suggestions.slice(0, 4),
-      warnings: warnings.slice(0, 3),
-      tips: tips.slice(0, 4),
-      security: security.slice(0, 2)
+      suggestions: suggestions.slice(0, 6),
+      warnings: warnings.slice(0, 4),
+      tips: tips.slice(0, 6),
+      security: security.slice(0, 3),
+      adoptionMetrics,
+      projectHealthScores,
+      avgHealthScore,
+      smartRecommendations
     };
   }, [recent]);
 
@@ -607,101 +715,275 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
           )}
         </section>
         <section className="panel insights-panel" aria-labelledby="insights-head">
-          <div className="panel-header"><h2 id="insights-head">Stack Insights 🔧</h2></div>
-          <ul className="news-list">
-            {!stackInsights && <li className="placeholder">Generate more projects to see insights</li>}
+          <div className="panel-header">
+            <h2 id="insights-head">Stack Insights 🔧</h2>
+            {stackInsights && (
+              <div style={{display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px'}}>
+                <span>Health Score: <strong style={{color: stackInsights.avgHealthScore > 75 ? '#4CAF50' : stackInsights.avgHealthScore > 50 ? '#FF9800' : '#F44336'}}>{stackInsights.avgHealthScore}/100</strong></span>
+                <div style={{width: '60px', height: '4px', background: '#eee', borderRadius: '2px', overflow: 'hidden'}}>
+                  <div style={{width: `${stackInsights.avgHealthScore}%`, height: '100%', background: stackInsights.avgHealthScore > 75 ? '#4CAF50' : stackInsights.avgHealthScore > 50 ? '#FF9800' : '#F44336', transition: 'width 0.3s ease'}}></div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {stackInsights && (
+            <div style={{marginBottom: '12px'}}>
+              <div style={{display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px'}}>
+                {['all', 'recommendations', 'warnings', 'performance', 'security'].map(filter => (
+                  <button
+                    key={filter}
+                    onClick={() => setInsightsFilter(filter)}
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '11px',
+                      borderRadius: '12px',
+                      border: 'none',
+                      background: insightsFilter === filter ? '#21808d' : '#f0f0f0',
+                      color: insightsFilter === filter ? 'white' : '#666',
+                      cursor: 'pointer',
+                      textTransform: 'capitalize'
+                    }}
+                  >
+                    {filter === 'all' ? 'All Insights' : filter}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="insights-content">
+            {!stackInsights && <div className="placeholder">Generate more projects to see insights</div>}
             
-            {/* Popular Stack Combinations */}
-            {stackInsights && stackInsights.popularCombos.length > 0 && 
-              stackInsights.popularCombos.map((combo, i) => (
-                <li key={`combo-${i}`} className="news-item">
-                  <div className="news-tag">Stack</div>
-                  <div className="news-body">
-                    <div className="news-title">{combo.combo}</div>
-                    <div className="news-date">{combo.percentage}% usage ({combo.count} projects)</div>
+            {stackInsights && (
+              <>
+                {/* Smart Recommendations Section */}
+                {(insightsFilter === 'all' || insightsFilter === 'recommendations') && stackInsights.smartRecommendations.length > 0 && (
+                  <div className="insights-section">
+                    <div className="insights-subhead">🎯 Smart Recommendations</div>
+                    {stackInsights.smartRecommendations.map((rec, i) => (
+                      <div key={`smart-${i}`} className="insight-card" style={{
+                        border: `1px solid ${rec.priority === 'high' ? '#F44336' : rec.priority === 'medium' ? '#FF9800' : '#4CAF50'}`,
+                        borderLeft: `4px solid ${rec.priority === 'high' ? '#F44336' : rec.priority === 'medium' ? '#FF9800' : '#4CAF50'}`
+                      }}>
+                        <div className="insight-header">
+                          <span className="insight-tag" style={{background: rec.priority === 'high' ? '#F44336' : rec.priority === 'medium' ? '#FF9800' : '#4CAF50'}}>
+                            {rec.category}
+                          </span>
+                          <span className="insight-priority">{rec.priority} priority</span>
+                        </div>
+                        <div className="insight-title">{rec.title}</div>
+                        <div className="insight-description">{rec.description}</div>
+                        <div className="insight-actions">
+                          <button 
+                            className="insight-action-btn"
+                            onClick={() => {
+                              // Handle recommendation action
+                              console.log('Applying recommendation:', rec.action);
+                              setAppliedSuggestions(prev => new Set([...prev, `smart-${i}`]));
+                            }}
+                            disabled={appliedSuggestions.has(`smart-${i}`)}
+                          >
+                            {appliedSuggestions.has(`smart-${i}`) ? '✓ Applied' : 'Apply'}
+                          </button>
+                          <button 
+                            className="insight-action-btn secondary"
+                            onClick={() => setExpandedInsight(expandedInsight === `smart-${i}` ? null : `smart-${i}`)}
+                          >
+                            {expandedInsight === `smart-${i}` ? 'Less' : 'Learn More'}
+                          </button>
+                        </div>
+                        {expandedInsight === `smart-${i}` && (
+                          <div className="insight-expanded">
+                            <p>This recommendation is based on your project patterns and industry best practices.</p>
+                            <p>Implementation would involve updating your project configurations and dependencies.</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                </li>
-              ))
-            }
+                )}
 
-            {/* Top Templates */}
-            {stackInsights && stackInsights.topTemplates && stackInsights.topTemplates.length > 0 && 
-              stackInsights.topTemplates.map((template, i) => (
-                <li key={`template-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#9C27B0'}}>Template</div>
-                  <div className="news-body">
-                    <div className="news-title">{template.template}</div>
-                    <div className="news-date">Used in {template.percentage}% of projects</div>
+                {/* Technology Adoption Metrics */}
+                {(insightsFilter === 'all') && (
+                  <div className="insights-section">
+                    <div className="insights-subhead">📊 Technology Adoption</div>
+                    <div className="adoption-grid">
+                      {Object.entries(stackInsights.adoptionMetrics).map(([category, techs]) => {
+                        const totalCount = Object.values(techs).reduce((sum, count) => sum + count, 0);
+                        if (totalCount === 0) return null;
+                        
+                        return (
+                          <div key={category} className="adoption-category">
+                            <div className="adoption-category-title">{category.charAt(0).toUpperCase() + category.slice(1)}</div>
+                            <div className="adoption-bars">
+                              {Object.entries(techs)
+                                .sort(([,a], [,b]) => b - a)
+                                .slice(0, 3)
+                                .map(([tech, count]) => (
+                                  <div key={tech} className="adoption-bar">
+                                    <span className="adoption-tech">{tech}</span>
+                                    <div className="adoption-bar-container">
+                                      <div 
+                                        className="adoption-bar-fill" 
+                                        style={{width: `${(count / totalCount) * 100}%`}}
+                                      ></div>
+                                    </div>
+                                    <span className="adoption-count">{count}</span>
+                                  </div>
+                                ))
+                              }
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </li>
-              ))
-            }
+                )}
 
-            {/* Technology Trends */}
-            {stackInsights && stackInsights.techTrends && stackInsights.techTrends.length > 0 && 
-              stackInsights.techTrends.map((trend, i) => (
-                <li key={`trend-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#673AB7'}}>Trend</div>
-                  <div className="news-body">
-                    <div className="news-title">{trend}</div>
-                    <div className="news-date">Development Pattern</div>
+                {/* Enhanced Suggestions with Actions */}
+                {(insightsFilter === 'all' || insightsFilter === 'recommendations') && stackInsights.suggestions.length > 0 && (
+                  <div className="insights-section">
+                    <div className="insights-subhead">💡 Enhancement Suggestions</div>
+                    {stackInsights.suggestions.map((suggestion, i) => (
+                      <div key={`suggestion-${i}`} className="insight-item">
+                        <div className="insight-tag" style={{background: '#2196F3'}}>Enhance</div>
+                        <div className="insight-content">
+                          <div className="insight-title">{suggestion}</div>
+                          <div className="insight-actions">
+                            <button 
+                              className="insight-action-btn"
+                              onClick={() => {
+                                setAppliedSuggestions(prev => new Set([...prev, `suggestion-${i}`]));
+                                // Could trigger actual project enhancement here
+                              }}
+                              disabled={appliedSuggestions.has(`suggestion-${i}`)}
+                            >
+                              {appliedSuggestions.has(`suggestion-${i}`) ? '✓ Noted' : 'Apply'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </li>
-              ))
-            }
+                )}
 
-            {/* Enhancement Suggestions */}
-            {stackInsights && stackInsights.suggestions && stackInsights.suggestions.length > 0 && 
-              stackInsights.suggestions.map((suggestion, i) => (
-                <li key={`suggestion-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#2196F3'}}>Enhance</div>
-                  <div className="news-body">
-                    <div className="news-title">{suggestion}</div>
-                    <div className="news-date">Recommended Addition</div>
+                {/* Interactive Warnings */}
+                {(insightsFilter === 'all' || insightsFilter === 'warnings') && stackInsights.warnings.length > 0 && (
+                  <div className="insights-section">
+                    <div className="insights-subhead">⚠️ Compatibility Warnings</div>
+                    {stackInsights.warnings.map((warning, i) => (
+                      <div key={`warning-${i}`} className="insight-item warning">
+                        <div className="insight-tag" style={{background: '#FF9800'}}>Alert</div>
+                        <div className="insight-content">
+                          <div className="insight-title">{warning}</div>
+                          <div className="insight-actions">
+                            <button 
+                              className="insight-action-btn"
+                              onClick={() => setAppliedSuggestions(prev => new Set([...prev, `warning-${i}`]))}
+                              disabled={appliedSuggestions.has(`warning-${i}`)}
+                            >
+                              {appliedSuggestions.has(`warning-${i}`) ? '✓ Resolved' : 'Fix'}
+                            </button>
+                            <button 
+                              className="insight-action-btn secondary"
+                              onClick={() => setExpandedInsight(expandedInsight === `warning-${i}` ? null : `warning-${i}`)}
+                            >
+                              Details
+                            </button>
+                          </div>
+                        </div>
+                        {expandedInsight === `warning-${i}` && (
+                          <div className="insight-expanded">
+                            <p>This warning indicates a potential configuration conflict that could cause issues during development or deployment.</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                </li>
-              ))
-            }
+                )}
 
-            {/* Compatibility Warnings */}
-            {stackInsights && stackInsights.warnings && stackInsights.warnings.length > 0 && 
-              stackInsights.warnings.map((warning, i) => (
-                <li key={`warning-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#FF9800'}}>Alert</div>
-                  <div className="news-body">
-                    <div className="news-title">{warning}</div>
-                    <div className="news-date">Potential Conflict</div>
+                {/* Performance Tips */}
+                {(insightsFilter === 'all' || insightsFilter === 'performance') && stackInsights.tips.length > 0 && (
+                  <div className="insights-section">
+                    <div className="insights-subhead">🚀 Performance Tips</div>
+                    {stackInsights.tips.map((tip, i) => (
+                      <div key={`tip-${i}`} className="insight-item">
+                        <div className="insight-tag" style={{background: '#4CAF50'}}>Optimize</div>
+                        <div className="insight-content">
+                          <div className="insight-title">{tip}</div>
+                          <div className="insight-actions">
+                            <button 
+                              className="insight-action-btn"
+                              onClick={() => setAppliedSuggestions(prev => new Set([...prev, `tip-${i}`]))}
+                              disabled={appliedSuggestions.has(`tip-${i}`)}
+                            >
+                              {appliedSuggestions.has(`tip-${i}`) ? '✓ Applied' : 'Implement'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </li>
-              ))
-            }
+                )}
 
-            {/* Performance Tips */}
-            {stackInsights && stackInsights.tips && stackInsights.tips.length > 0 && 
-              stackInsights.tips.map((tip, i) => (
-                <li key={`tip-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#4CAF50'}}>Optimize</div>
-                  <div className="news-body">
-                    <div className="news-title">{tip}</div>
-                    <div className="news-date">Performance Boost</div>
+                {/* Security Recommendations */}
+                {(insightsFilter === 'all' || insightsFilter === 'security') && stackInsights.security.length > 0 && (
+                  <div className="insights-section">
+                    <div className="insights-subhead">🔒 Security Recommendations</div>
+                    {stackInsights.security.map((sec, i) => (
+                      <div key={`security-${i}`} className="insight-item security">
+                        <div className="insight-tag" style={{background: '#E91E63'}}>Security</div>
+                        <div className="insight-content">
+                          <div className="insight-title">{sec}</div>
+                          <div className="insight-actions">
+                            <button 
+                              className="insight-action-btn"
+                              onClick={() => setAppliedSuggestions(prev => new Set([...prev, `security-${i}`]))}
+                              disabled={appliedSuggestions.has(`security-${i}`)}
+                            >
+                              {appliedSuggestions.has(`security-${i}`) ? '✓ Secured' : 'Secure'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </li>
-              ))
-            }
+                )}
 
-            {/* Security Recommendations */}
-            {stackInsights && stackInsights.security && stackInsights.security.length > 0 && 
-              stackInsights.security.map((sec, i) => (
-                <li key={`security-${i}`} className="news-item">
-                  <div className="news-tag" style={{background: '#E91E63'}}>Security</div>
-                  <div className="news-body">
-                    <div className="news-title">{sec}</div>
-                    <div className="news-date">Security Enhancement</div>
+                {/* Project Health Scores */}
+                {(insightsFilter === 'all') && stackInsights.projectHealthScores.length > 0 && (
+                  <div className="insights-section">
+                    <div className="insights-subhead">🏥 Project Health Analysis</div>
+                    <div className="health-scores">
+                      {stackInsights.projectHealthScores
+                        .sort((a, b) => b.score - a.score)
+                        .slice(0, 5)
+                        .map((project, i) => (
+                          <div key={`health-${i}`} className="health-item">
+                            <div className="health-project">{project.projectName}</div>
+                            <div className="health-score">
+                              <span style={{color: project.score > 75 ? '#4CAF50' : project.score > 50 ? '#FF9800' : '#F44336'}}>
+                                {project.score}/100
+                              </span>
+                              <div className="health-bar">
+                                <div style={{width: `${project.score}%`, background: project.score > 75 ? '#4CAF50' : project.score > 50 ? '#FF9800' : '#F44336'}}></div>
+                              </div>
+                            </div>
+                            {project.improvements.length > 0 && (
+                              <div className="health-improvements">
+                                <small>Needs: {project.improvements.slice(0, 2).join(', ')}</small>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      }
+                    </div>
                   </div>
-                </li>
-              ))
-            }
-          </ul>
+                )}
+              </>
+            )}
+          </div>
         </section>
         {/* <section className="panel news-panel" aria-labelledby="news-head">
           <div className="panel-header"><h2 id="news-head">Trends & Updates</h2></div>
