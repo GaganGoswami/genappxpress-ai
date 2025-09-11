@@ -386,7 +386,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
     <div className="dashboard-root" aria-label="Dashboard Home">
       <div className="dash-grid dash-grid-threecol">
         <section className="panel recent-panel" aria-labelledby="recent-head">
-          <div className="panel-header"><h2 id="recent-head">Recent Projects</h2></div>
+          <div className="panel-header"><h2 id="recent-head">Recent Projects 🏗️</h2></div>
           <div className="cards">
             {recent.length === 0 && <div className="placeholder">No projects yet. Generate your first scaffold!</div>}
             {recent.map(r => (
@@ -425,7 +425,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
         </section>
         <div className="centercol-group">
           <section className="panel metrics-panel" aria-labelledby="metrics-head">
-            <div className="panel-header"><h2 id="metrics-head">Productivity Matrix</h2></div>
+            <div className="panel-header"><h2 id="metrics-head">Productivity Matrix 📈</h2></div>
             <div className="metrics-summary">
               <div><strong>{metrics.total}</strong><span>Projects</span></div>
               <div><strong>{metrics.hoursSaved}</strong><span>Hours Saved*</span></div>
@@ -460,7 +460,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
             <div className="fine-print">*Estimated time saved assuming ~80 min manual setup / project.</div>
           </section>
           <section className="panel templates-panel" aria-labelledby="templates-head">
-            <div className="panel-header"><h2 id="templates-head">Template Gallery</h2></div>
+            <div className="panel-header"><h2 id="templates-head">Template Gallery 📋</h2></div>
             {/* Group templates by category */}
             {(() => {
               const groups = (TECH_STACK.templates || []).reduce((acc, t) => {
@@ -491,7 +491,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
         </div>
         <div>
         <section className="panel nlp-panel" aria-labelledby="nlp-head">
-          <div className="panel-header"><h2 id="nlp-head">NLP Template Builder (Preview)</h2></div>
+          <div className="panel-header"><h2 id="nlp-head">NLP Template Builder 🧠 </h2></div>
           <div className="field" style={{display:'flex', flexDirection:'column', gap:8}}>
             <label htmlFor="nlp-input" style={{fontSize:12, textTransform:'uppercase', letterSpacing:'.05em'}}>Describe your application</label>
             <textarea id="nlp-input" value={nlpInput} onChange={e=>setNlpInput(e.target.value)} placeholder="e.g. Build a RAG service with FastAPI backend and React UI using OpenAI and LangChain" rows={3} style={{resize:'vertical'}} />
@@ -520,7 +520,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate }) {
           )}
         </section>
         <section className="panel insights-panel" aria-labelledby="insights-head">
-          <div className="panel-header"><h2 id="insights-head">Stack Insights</h2></div>
+          <div className="panel-header"><h2 id="insights-head">Stack Insights 🔧</h2></div>
           <ul className="news-list">
             {!stackInsights && <li className="placeholder">Generate more projects to see insights</li>}
             

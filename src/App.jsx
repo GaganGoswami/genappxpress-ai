@@ -10,6 +10,7 @@ import FileTree from './components/FileTree';
 import EditorDiff from './components/EditorDiff';
 import ScriptPreview from './components/ScriptPreview';
 import { TECH_STACK, CATEGORY_LABELS, checkCompatibility, generateScript } from './data/techData';
+import { HiOutlineQuestionMarkCircle, HiOutlineSun, HiOutlineMoon, HiOutlineXMark } from 'react-icons/hi2';
 
 const emptySelection = {frontend:[], backend:[], database:[], tools:[], aiFrameworks:[], llmProviders:[], protocols:[]};
 
@@ -280,13 +281,18 @@ export default function App() {
       <header aria-label="App header">
         <div className="logo" aria-hidden style={{cursor:'pointer'}} onClick={()=>{setView('dashboard'); setCurrentStep(1);}} title="Go to Dashboard">GX</div>
         <div className="title-block" style={{cursor:'pointer'}} onClick={()=>{setView('dashboard'); setCurrentStep(1);}} title="Go to Dashboard">
-          <h1>GenAppXpress <span className="pill">ALPHA</span></h1>
+          <h1>GenAppXpress <span className="pill">Beta</span></h1>
           <div className="tagline">Visual full‑stack & agentic AI scaffolding · Export scripts & project files</div>
         </div>
-        <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle color theme">{darkMode? 'Light Mode':'Dark Mode'}</button>
-        <button className="secondary" onClick={()=>setShowTemplates(true)}>Templates</button>
-        <button className="secondary" onClick={()=>setShowHelp(true)} aria-label="Show usage/help">Help</button>
-        <button className="secondary" onClick={()=>setView(view==='dashboard'?'wizard':'dashboard')} aria-label="Go to Dashboard" style={{marginLeft:8}}>{view==='dashboard'?'Generate App':'Dashboard'}</button>
+
+        <button className="secondary" onClick={()=>setView(view==='dashboard'?'wizard':'dashboard')} aria-label="Go to Dashboard" style={{marginLeft:8}}>{view==='dashboard'?'Scaffold Magic ✨':'Dashboard 🏠'}</button>
+        <button className="secondary" onClick={()=>setShowTemplates(true)}>Templates 📋 </button>
+        <button className="secondary" onClick={toggleTheme} aria-label="Toggle color theme">
+          {darkMode ? <HiOutlineSun size={18} /> : <HiOutlineMoon size={18} />}
+        </button>
+        <button className="secondary" onClick={()=>setShowHelp(true)} aria-label="Show usage/help"> 
+          <HiOutlineQuestionMarkCircle size={18} />
+        </button>
       </header>
       {view==='dashboard' ? (
         <Dashboard
@@ -411,7 +417,9 @@ export default function App() {
           <div className="modal-content help-modal" style={helpContentStyle}>
             <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:24}}>
               <h2 style={helpHeadingStyle}>GenAppXpress Help & Guide</h2>
-              <button onClick={()=>setShowHelp(false)} className="secondary" aria-label="Close Help" style={{alignSelf:'flex-start'}}>Close</button>
+              <button onClick={()=>setShowHelp(false)} className="secondary" aria-label="Close Help" style={{alignSelf:'flex-start'}}>
+                <HiOutlineXMark size={18} />
+              </button>
             </div>
             <p style={subtleTextStyle}>Version 0.1.0 · Rapid full‑stack + agentic AI project scaffolding. This guide summarizes how to use the dashboard & wizard effectively.</p>
             <h3 style={{marginTop:24}}>1. Quick Start</h3>
@@ -486,7 +494,9 @@ export default function App() {
             </ul>
             <div style={{marginTop:32, fontSize:12, color: darkMode? '#5f8b8f':'#666'}}>Generated help content – refine or customize directly in <code style={codeStyle}>App.jsx</code>. Feedback welcomed.</div>
             <div style={{display:'flex', justifyContent:'flex-end', marginTop:16}}>
-              <button onClick={()=>setShowHelp(false)} aria-label="Close Help Dialog">Close</button>
+               <button onClick={()=>setShowHelp(false)} className="secondary" aria-label="Close Help" style={{alignSelf:'flex-start'}}>
+                <HiOutlineXMark size={18} />
+              </button>
             </div>
           </div>
         </div>
