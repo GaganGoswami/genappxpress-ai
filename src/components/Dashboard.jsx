@@ -78,7 +78,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
 
   const metrics = useMemo(() => {
     const total = recent.length;
-    const estMinutesSaved = total * 80;
+    const estMinutesSaved = total * 180;
     const hoursSaved = (estMinutesSaved / 60).toFixed(1);
     // Aggregate distinct template usage across projects (dedupe within each project)
     const byTemplate = recent.reduce((acc, r) => {
