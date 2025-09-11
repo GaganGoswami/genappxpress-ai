@@ -737,53 +737,73 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
             </div>
             
             <div className="template-gallery-container">
-              {/* Compact Template Cards */}
-              <div className="template-cards-grid">
-                {(TECH_STACK.templates || []).map(template => {
-                  const usageCount = templateUsage[template.id] || 0;
-                  const technologies = template.stack ? Object.values(template.stack).flat().filter(tech => tech) : [];
+              {/* Categorized Template Cards */}
+              {Object.entries((TECH_STACK.templates || []).reduce((acc, template) => {
+                const category = template.category || 'Other';
+                if (!acc[category]) acc[category] = [];
+                acc[category].push(template);
+                return acc;
+              }, {})).map(([category, templates]) => (
+                <div key={category} className="template-category">
+                  <div className="template-category-header">
+                    <h3 className="category-title">
+                      <span className="category-icon">{getCategoryIcon(category)}</span>
+                      {category}
+                    </h3>
+                    <span className="category-count">{templates.length}</span>
+                  </div>
                   
-                  return (
-                    <div key={template.id} className="template-card">
-                      <div className="template-card-header">
-                        <div className="template-icon">
-                          {getTemplateIcon(template.id)}
-                        </div>
-                        <div className="usage-counter">
-                          {usageCount}
-                        </div>
-                      </div>
+                  <div className="template-cards-grid">
+                    {templates.map(template => {
+                      const usageCount = templateUsage[template.id] || 0;
+                      const technologies = template.stack ? Object.values(template.stack).flat().filter(tech => tech) : [];
                       
-                      <div className="template-card-content">
-                        <h3 className="template-title">{template.name}</h3>
-                        <p className="template-description">{template.description}</p>
-                        
-                        <div className="template-tags">
-                          {technologies.slice(0, 2).map(tech => (
-                            <span key={tech} className="template-tag">{tech}</span>
-                          ))}
+                      return (
+                        <div key={template.id} className="template-card">
+                          <div className="template-card-header">
+                            <div className="template-icon">
+                              {getTemplateIcon(template.id)}
+                            </div>
+                            <div className={`usage-counter ${usageCount > 0 ? 'used' : 'unused'}`}>
+                              {usageCount}
+                            </div>
+                          </div>
+                          
+                          <div className="template-card-content">
+                            <h3 className="template-title">{template.name}</h3>
+                            <p className="template-description">{template.description}</p>
+                            
+                            <div className="template-tags">
+                              {technologies.slice(0, 2).map(tech => (
+                                <span key={tech} className="template-tag">{tech}</span>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <button 
+                            className="use-template-btn"
+                            onClick={() => handleTemplateUsage(template)}
+                            title={template.description}
+                          >
+                            Use Template
+                          </button>
                         </div>
-                      </div>
-                      
-                      <button 
-                        className="use-template-btn"
-                        onClick={() => handleTemplateUsage(template)}
-                        title={template.description}
-                      >
-                        Use Template
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
               
               {/* Recommended Templates Section */}
               {recommended.length > 0 && (
-                <div className="recommended-section">
-                  <div className="subhead" style={{ marginTop: 20, marginBottom: 12 }}>
-                    📋 RAG / Retrieval ({recommended.length})
+                <div className="template-category">
+                  <div className="template-category-header">
+                    <h3 className="category-title">
+                      <span className="category-icon">🎯</span>
+                      Recommended for You
+                    </h3>
+                    <span className="category-count">{recommended.length}</span>
                   </div>
-                  <p className="recommended-description">Templates for various development needs</p>
                   
                   <div className="template-cards-grid">
                     {recommended.map(templateId => {
@@ -797,7 +817,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
                             <div className="template-icon">
                               {getTemplateIcon(templateId)}
                             </div>
-                            <div className="usage-counter">
+                            <div className={`usage-counter ${usageCount > 0 ? 'used' : 'unused'}`}>
                               {usageCount}
                             </div>
                           </div>

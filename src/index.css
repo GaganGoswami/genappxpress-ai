@@ -971,23 +971,23 @@ html, body { overflow-x: hidden; }
   scrollbar-color: var(--color-border) transparent;
 }
 
-/* Compact Template Cards */
+/* Ultra Compact Template Cards */
 .template-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
 }
 
 .template-card {
   background: var(--color-elevated);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 8px;
+  padding: 10px;
   transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-height: 160px;
+  gap: 8px;
+  min-height: 120px;
 }
 
 .template-card:hover {
@@ -1000,32 +1000,112 @@ html, body { overflow-x: hidden; }
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  position: relative;
 }
 
 .template-icon {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   background: var(--color-primary);
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 18px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
 .usage-counter {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  border-radius: 20px;
   padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 700;
   min-width: 20px;
   text-align: center;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  cursor: help;
+  transition: all 0.2s ease;
+  z-index: 2;
 }
+
+/* Used templates (count > 0) */
+.usage-counter.used {
+  background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.4);
+}
+
+.usage-counter.used:hover {
+  transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(76, 175, 80, 0.5);
+}
+
+/* Unused templates (count = 0) */
+.usage-counter.unused {
+  background: linear-gradient(135deg, #9E9E9E 0%, #BDBDBD 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(158, 158, 158, 0.3);
+}
+
+.usage-counter.unused:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 6px rgba(158, 158, 158, 0.4);
+}
+
+/* Dark theme adjustments */
+[data-color-scheme="dark"] .usage-counter.used {
+  background: linear-gradient(135deg, #66BB6A 0%, #81C784 100%);
+  box-shadow: 0 2px 6px rgba(102, 187, 106, 0.5);
+}
+
+[data-color-scheme="dark"] .usage-counter.unused {
+  background: linear-gradient(135deg, #757575 0%, #9E9E9E 100%);
+  box-shadow: 0 2px 4px rgba(117, 117, 117, 0.4);
+}
+
+/* Template Category Styles */
+.template-category {
+  margin-bottom: 24px;
+}
+
+.template-category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.category-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.category-icon {
+  font-size: 16px;
+}
+
+.category-count {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+}
+
+/* Usage counter - clean design without tooltips */
 
 .template-card-content {
   flex: 1;
@@ -1035,19 +1115,24 @@ html, body { overflow-x: hidden; }
 }
 
 .template-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text);
   margin: 0;
-  line-height: 1.3;
+  line-height: 1.2;
 }
 
 .template-description {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--color-text-secondary);
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.3;
   flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .template-tags {
@@ -1060,9 +1145,9 @@ html, body { overflow-x: hidden; }
 .template-tag {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 11px;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 10px;
   color: var(--color-text-secondary);
   text-transform: capitalize;
 }
@@ -1071,9 +1156,9 @@ html, body { overflow-x: hidden; }
   background: var(--color-primary);
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 13px;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s ease;
