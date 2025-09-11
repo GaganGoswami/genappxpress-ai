@@ -202,6 +202,8 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
       const hasFlask = (r.backend || []).some(b => b && b.toLowerCase().includes('flask'));
       const hasElectron = (r.frontend || []).some(f => f && f.toLowerCase().includes('electron'));
       const hasReact = (r.frontend || []).some(f => f && f.toLowerCase().includes('react'));
+      const hasVue = (r.frontend || []).some(f => f && f.toLowerCase().includes('vue'));
+      const hasSvelte = (r.frontend || []).some(f => f && f.toLowerCase().includes('svelte'));
 
       if (hasNext && hasVite) {
         warnings.push(`${r.projectName}: Next.js includes bundling - Vite may conflict`);
@@ -359,26 +361,11 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
     onOpenProject(draft); // normalization handled by existing logic
   }
 
-  // Patch: handle template usage from gallery to update metrics/chart immediately
+  // Handle template selection from gallery - navigate to wizard without creating project entries
   const handleTemplateUsage = (template) => {
-    // Create a new project entry for history
-    const now = new Date();
-    const entry = {
-      id: 't_' + now.getTime().toString(36),
-      projectName: template.name || template.id,
-      date: now.toISOString(),
-      type: 'App',
-      frontend: template.preset?.frontend?.map(f => TECH_STACK.frontend.find(x => x.id === f)?.name || f) || [],
-      backend: template.preset?.backend?.map(b => TECH_STACK.backend.find(x => x.id === b)?.name || b) || [],
-      aiFrameworks: template.preset?.aiFrameworks?.map(a => TECH_STACK.aiFrameworks.find(x => x.id === a)?.name || a) || [],
-      templates: [template.id],
-    };
-    try {
-      const raw = JSON.parse(localStorage.getItem('genappxpress-history') || '[]');
-      raw.push(entry);
-      localStorage.setItem('genappxpress-history', JSON.stringify(raw));
-      setRecent([entry, ...recent]);
-    } catch (e) { /* ignore */ }
+    // Simply trigger the template selection callback to open the wizard
+    // Don't create fake project entries in Recent Projects - those should only be created
+    // when users actually generate/complete a project
     if (onSelectTemplate) onSelectTemplate(template);
   };
 

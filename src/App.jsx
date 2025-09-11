@@ -140,19 +140,14 @@ export default function App() {
     const normalized = Object.keys(emptySelection).reduce((acc,k)=>{ acc[k] = Array.isArray(preset[k]) ? preset[k] : (selected[k]||[]); return acc; }, {});
     setSelected(normalized);
     localStorage.setItem('genappxpress-selected', JSON.stringify(normalized));
-    // If project name hasn't been customized (still default pattern) then set to template id or name
-    setProjectName(prevName => {
-      const defaultPatterns = ['my-awesome-project','my-project','new-project'];
-      if (defaultPatterns.includes(prevName.trim().toLowerCase())) {
-        const base = (templateObj.name || templateObj.id || 'project').toString()
-          .replace(/[^a-z0-9-_\s]/gi,'')
-          .trim()
-          .replace(/\s+/g,'-')
-          .toLowerCase();
-        return base || prevName;
-      }
-      return prevName; // user already customized
-    });
+    // Always set project name to template name when applying a template
+    // This ensures each new template generates with its own name by default
+    const base = (templateObj.name || templateObj.id || 'project').toString()
+      .replace(/[^a-z0-9-_\s]/gi,'')
+      .trim()
+      .replace(/\s+/g,'-')
+      .toLowerCase();
+    setProjectName(base || 'my-awesome-project');
     setShowTemplates(false);
     setView('wizard');
     setCurrentStep(2);
@@ -279,13 +274,20 @@ export default function App() {
   return (
     <div className="app-shell" role="main" aria-label="GenAppXpress">
       <header aria-label="App header">
-        <div className="logo" aria-hidden style={{cursor:'pointer'}} onClick={()=>{setView('dashboard'); setCurrentStep(1);}} title="Go to Dashboard">GX</div>
-        <div className="title-block" style={{cursor:'pointer'}} onClick={()=>{setView('dashboard'); setCurrentStep(1);}} title="Go to Dashboard">
+        <div className="logo" aria-hidden style={{cursor:'pointer'}} onClick={()=>{setView('dashboard'); setCurrentStep(1); setAppliedTemplateIds([]);}} title="Go to Dashboard">GX</div>
+        <div className="title-block" style={{cursor:'pointer'}} onClick={()=>{setView('dashboard'); setCurrentStep(1); setAppliedTemplateIds([]);}} title="Go to Dashboard">
           <h1>GenAppXpress <span className="pill">Beta</span></h1>
           <div className="tagline">Visual full‑stack & agentic AI scaffolding · Export scripts & project files</div>
         </div>
 
-        <button className="secondary" onClick={()=>setView(view==='dashboard'?'wizard':'dashboard')} aria-label="Go to Dashboard" style={{marginLeft:8}}>{view==='dashboard'?'Scaffold Magic ✨':'Dashboard 🏠'}</button>
+        <button className="secondary" onClick={()=>{
+          if(view==='dashboard') {
+            setView('wizard');
+          } else {
+            setView('dashboard');
+            setAppliedTemplateIds([]);
+          }
+        }} aria-label="Go to Dashboard" style={{marginLeft:8}}>{view==='dashboard'?'Scaffold Magic ✨':'Dashboard 🏠'}</button>
         <button className="secondary" onClick={()=>setShowTemplates(true)}>Templates 📋 </button>
         <button className="secondary" onClick={toggleTheme} aria-label="Toggle color theme">
           {darkMode ? <HiOutlineSun size={18} /> : <HiOutlineMoon size={18} />}
@@ -302,6 +304,7 @@ export default function App() {
             const restored = {frontend:p.frontend||[], backend:p.backend||[], database:p.database||[], tools:p.tools||[], aiFrameworks:p.aiFrameworks||[], llmProviders:p.llmProviders||[], protocols:p.protocols||[]};
             setSelected(restored);
             try { localStorage.setItem('genappxpress-selected', JSON.stringify(restored)); } catch(e) { /* ignore */ }
+            setAppliedTemplateIds([]); // Reset template tracking for new project
             setView('wizard');
             setCurrentStep(3);
           }}
@@ -310,6 +313,15 @@ export default function App() {
               const normalized = Object.keys(emptySelection).reduce((acc,k)=>{ acc[k] = Array.isArray(t.preset[k]) ? t.preset[k] : []; return acc; }, {});
               setSelected(normalized);
               localStorage.setItem('genappxpress-selected', JSON.stringify(normalized));
+              // Set project name to template name
+              const base = (t.name || t.id || 'project').toString()
+                .replace(/[^a-z0-9-_\s]/gi,'')
+                .trim()
+                .replace(/\s+/g,'-')
+                .toLowerCase();
+              setProjectName(base || 'my-awesome-project');
+              // Reset and set the selected template ID for new project
+              setAppliedTemplateIds([t.id]);
               setView('wizard');
               setCurrentStep(2);
             }
@@ -408,7 +420,7 @@ export default function App() {
               <button className="secondary" disabled={currentStep===1} onClick={()=>setCurrentStep(s=>Math.max(1,s-1))}>Back</button>
               {currentStep<4 && currentStep>=1 && <button disabled={!canNext()} onClick={()=>setCurrentStep(s=>Math.min(4,s+1))}>{currentStep===3?'Generate':'Next'}</button>}
             </div>
-            {currentStep===4 && <button onClick={()=>{setView('dashboard'); setSelected(emptySelection); setCurrentStep(1);}} className="ghost">Return to Dashboard</button>}
+            {currentStep===4 && <button onClick={()=>{setView('dashboard'); setSelected(emptySelection); setCurrentStep(1); setAppliedTemplateIds([]);}} className="ghost">Return to Dashboard</button>}
           </div>
         </div>
       )}
