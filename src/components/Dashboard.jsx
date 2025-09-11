@@ -80,17 +80,19 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
     const total = recent.length;
     const estMinutesSaved = total * 180;
     const hoursSaved = (estMinutesSaved / 60).toFixed(1);
-    // Aggregate distinct template usage across projects (dedupe within each project)
-    const byTemplate = recent.reduce((acc, r) => {
-      const uniq = Array.from(new Set(r.templates || []));
-      uniq.forEach(t => { acc[t] = true; });
+    // Count template usage frequency across all projects
+    const templateUsageCount = recent.reduce((acc, r) => {
+      const templates = r.templates || [];
+      templates.forEach(t => {
+        acc[t] = (acc[t] || 0) + 1;
+      });
       return acc;
     }, {});
-    const distinctTemplates = Object.keys(byTemplate).length;
-    return { total, hoursSaved, distinctTemplates, distinctTemplateIds: Object.keys(byTemplate) };
+    const distinctTemplates = Object.keys(templateUsageCount).length;
+    return { total, hoursSaved, distinctTemplates, templateUsageCount };
   }, [recent]);
 
-  const templateData = (metrics.distinctTemplateIds || []).map(name => ({ name, value: 1 }));
+  const templateData = Object.entries(metrics.templateUsageCount || {}).map(([name, count]) => ({ name, value: count }));
   const pieColors = ['#21808d', '#2da6b2', '#2996a1', '#32b8c6', '#1a6873', '#13343b'];
 
   const recommended = useMemo(() => {
@@ -470,17 +472,20 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
                   </ResponsiveContainer>
                 ) : <div className="placeholder" style={{ height: 180 }}>No template data yet.</div>}
               </div>
-              <div className="mini-chart" aria-label="Projects over time">
-                {recent.length > 0 ? (
+              <div className="mini-chart" aria-label="Template usage frequency">
+                {templateData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={180}>
-                    <BarChart data={recent.map(r => ({ name: r.projectName.slice(0, 10), v: 1 }))}>
+                    <BarChart data={templateData}>
                       <XAxis dataKey="name" hide />
                       <YAxis hide />
-                      <Tooltip />
-                      <Bar dataKey="v" fill="#21808d" radius={[3, 3, 0, 0]} />
+                      <Tooltip 
+                        formatter={(value, name) => [`${value} uses`, 'Template Usage']}
+                        labelFormatter={(label) => `Template: ${label}`}
+                      />
+                      <Bar dataKey="value" fill="#21808d" radius={[3, 3, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
-                ) : <div className="placeholder" style={{ height: 180 }}>No activity yet.</div>}
+                ) : <div className="placeholder" style={{ height: 180 }}>No template data yet.</div>}
               </div>
             </div>
             <div className="fine-print">*Estimated time saved assuming ~80 min manual setup / project.</div>
