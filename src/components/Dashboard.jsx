@@ -835,7 +835,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
             </div>
           )}
         </section>
-        <section className="panel insights-panel" aria-labelledby="insights-head">
+        <section className="panel insights-panel" aria-labelledby="insights-head" style={{marginTop: '16px'}}>
           <div className="panel-header">
             <h2 id="insights-head">Stack Insights 🔧</h2>
             {stackInsights && (
