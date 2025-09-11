@@ -604,7 +604,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
     <div className="dashboard-root" aria-label="Dashboard Home">
       <div className="dash-grid dash-grid-threecol">
         <section className="panel recent-panel" aria-labelledby="recent-head">
-          <div className="panel-header"><h2 id="recent-head">Recent Projects 🏗️</h2></div>
+          <div className="panel-header"><h2 id="recent-head">🏗️ Recent Projects</h2></div>
           <div className="cards">
             {recent.length === 0 && <div className="placeholder">No projects yet. Generate your first scaffold!</div>}
             {recent.map(r => (
@@ -643,7 +643,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
         </section>
         <div className="centercol-group">
           <section className="panel metrics-panel" aria-labelledby="metrics-head">
-            <div className="panel-header"><h2 id="metrics-head">Productivity Matrix 📈</h2></div>
+            <div className="panel-header"><h2 id="metrics-head">📈 Productivity Matrix</h2></div>
             <div className="metrics-summary">
               <div style={{
                 background: darkMode 
@@ -796,7 +796,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
               
               {/* Recommended Templates Section */}
               {recommended.length > 0 && (
-                <div className="template-category">
+                <div className="template-category" data-category="recommended">
                   <div className="template-category-header">
                     <h3 className="category-title">
                       <span className="category-icon">🎯</span>
@@ -851,7 +851,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
         </div>
         <div>
         <section className="panel nlp-panel" aria-labelledby="nlp-head">
-          <div className="panel-header"><h2 id="nlp-head">NLP Template Builder 🧠 </h2></div>
+          <div className="panel-header"><h2 id="nlp-head">🧠  NLP Template Builder</h2></div>
           <div className="field" style={{display:'flex', flexDirection:'column', gap:8}}>
             <label htmlFor="nlp-input" style={{fontSize:12, textTransform:'uppercase', letterSpacing:'.05em'}}>Describe your application</label>
             <textarea id="nlp-input" value={nlpInput} onChange={e=>setNlpInput(e.target.value)} placeholder="e.g. Build a RAG service with FastAPI backend and React UI using OpenAI and LangChain" rows={3} style={{resize:'vertical'}} />
@@ -881,7 +881,7 @@ export default function Dashboard({ onOpenProject, onSelectTemplate, darkMode })
         </section>
         <section className="panel insights-panel" aria-labelledby="insights-head" style={{marginTop: '16px'}}>
           <div className="panel-header">
-            <h2 id="insights-head">Stack Insights 🔧</h2>
+            <h2 id="insights-head">🔧 Stack Insights</h2>
             {stackInsights && (
               <div style={{display: 'flex', gap: '8px', alignItems: 'center', fontSize: '12px'}}>
                 <span>Health Score: <strong style={{color: stackInsights.avgHealthScore > 75 ? '#4CAF50' : stackInsights.avgHealthScore > 50 ? '#FF9800' : '#F44336'}}>{stackInsights.avgHealthScore}/100</strong></span>

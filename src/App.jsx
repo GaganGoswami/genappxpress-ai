@@ -287,8 +287,8 @@ export default function App() {
             setView('dashboard');
             setAppliedTemplateIds([]);
           }
-        }} aria-label="Go to Dashboard" style={{marginLeft:8}}>{view==='dashboard'?'Scaffold Magic ✨':'Dashboard 🏠'}</button>
-        <button className="secondary" onClick={()=>setShowTemplates(true)}>Templates 📋 </button>
+        }} aria-label="Go to Dashboard" style={{marginLeft:8}}>{view==='dashboard'?'✨ Scaffold Magic':'🏠 Dashboard'}</button>
+        <button className="secondary" onClick={()=>setShowTemplates(true)}>📋 Templates</button>
         <button className="secondary" onClick={toggleTheme} aria-label="Toggle color theme">
           {darkMode ? <HiOutlineSun size={18} /> : <HiOutlineMoon size={18} />}
         </button>

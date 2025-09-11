@@ -1073,6 +1073,23 @@ html, body { overflow-x: hidden; }
   margin-bottom: 24px;
 }
 
+/* Special styling for Recommended section */
+.template-category:has(.category-title:contains("Recommended for You")),
+.template-category[data-category="recommended"] {
+  background: var(--color-surface);
+  border: 2px dashed var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 20px 0;
+  position: relative;
+}
+
+[data-color-scheme="dark"] .template-category:has(.category-title:contains("Recommended for You")),
+[data-color-scheme="dark"] .template-category[data-category="recommended"] {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 .template-category-header {
   display: flex;
   align-items: center;
